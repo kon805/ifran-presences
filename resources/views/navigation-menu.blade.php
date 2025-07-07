@@ -34,9 +34,16 @@
                             {{ __('Liste des classes') }}
                         </x-nav-link>
                     </div>
+
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link href="{{ route('coordinateur.classes.create') }}" :active="request()->routeIs('coordinateur.classes.create')">
-                            {{ __('Créer une classe') }}
+                        <x-nav-link href="{{ route('emploi-du-temps.index') }}" :active="request()->routeIs('emploi-du-temps.index')">
+                            {{ __('Emploi du temps') }}
+                        </x-nav-link>
+                    </div>
+
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('coordinateur.presences.index') }}" :active="request()->routeIs('coordinateur.presences.index')">
+                            {{ __('Consulter les présences') }}
                         </x-nav-link>
                     </div>
                 @elseif($role === 'professeur')
@@ -45,6 +52,14 @@
                             {{ __('Dashboard Professeur') }}
                         </x-nav-link>
                     </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('presences.index') }}" :active="request()->routeIs('emploi-du-temps.index')">
+                            {{ __('Emploi du temps') }}
+                        </x-nav-link>
+                    </div>
+
+
+
                 @elseif($role === 'etudiant')
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link href="/etudiant" :active="request()->is('etudiant')">
