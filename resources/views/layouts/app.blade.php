@@ -10,7 +10,7 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-TnL9eYzRufmXOTY/NfGi0e1RUmEKRkJ2gM+oFu6Puc7nIb+vToiUOaO3jhj1UQ9WekFiWJpM5K2HTD9vj5aLZw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
          <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         <!-- Scripts -->
@@ -23,7 +23,7 @@
         <x-banner />
         @include('components.sidebar')
 
-        <div class="min-h-screen  bg-gray-100 pl-64">
+        <div class="min-h-screen  bg-gray-100 mx-10 pl-64">
 
 
             <!-- Page Heading -->

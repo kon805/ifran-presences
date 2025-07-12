@@ -2,6 +2,22 @@
 @section('content')
 <div class="max-w-4xl mx-auto py-6">
     <h2 class="text-2xl font-bold mb-4">Ajouter un cours à l'emploi du temps</h2>
+
+    @if(session('success'))
+        <div class="mb-4 p-2 bg-green-100 text-green-700 rounded">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-4 p-2 bg-red-100 text-red-700 rounded">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <form method="POST" action="{{ route('emploi-du-temps.store') }}">
         @csrf
 
@@ -26,7 +42,22 @@
 
             <div>
                 <label>Matière</label>
-                <input type="text" name="matiere" class="w-full p-2 border rounded" required>
+                <select name="matiere_id" class="w-full p-2 border rounded" required>
+                    <option value="">-- Choisir une matière --</option>
+                    @foreach($matieres as $matiere)
+                        <option value="{{ $matiere->id }}">{{ $matiere->nom }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label>Type de cours</label>
+                <select name="type_cours_id" class="w-full p-2 border rounded" required>
+                    <option value="">-- Choisir un type de cours --</option>
+                    @foreach($types as $type)
+                        <option value="{{ $type->id }}">{{ $type->nom }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div>

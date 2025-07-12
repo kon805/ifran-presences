@@ -69,4 +69,54 @@ class UserFactory extends Factory
             'ownedTeams'
         );
     }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a coordinateur.
+     */
+    public function coordinateur(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'coordinateur',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a professeur.
+     */
+    public function professeur(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'professeur',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an etudiant.
+     */
+    public function etudiant(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'etudiant',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a parent.
+     */
+    public function parent(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'parent',
+        ]);
+    }
 }

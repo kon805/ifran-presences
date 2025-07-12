@@ -78,5 +78,20 @@ public function presences()
     return $this->hasMany(Presence::class, 'etudiant_id');
 }
 
+    public function enfants()
+    {
+        return $this->hasMany(\App\Models\Parents::class, 'user_id');
+    }
+    public function parentOf()
+    {
+        return $this->hasMany(\App\Models\Parents::class, 'etudiant_id');
+    }
+public function matieres()
+{
+    return $this->belongsToMany(\App\Models\Matiere::class)
+        ->withPivot('dropped')
+        ->withTimestamps();
+
+}
 
 }

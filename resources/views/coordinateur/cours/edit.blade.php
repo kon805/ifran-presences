@@ -46,6 +46,17 @@
             </div>
 
             <div>
+                <label>Type de cours</label>
+                <select name="type_cours_id" class="w-full p-2 border rounded">
+                    @foreach($typesCours as $type)
+                        <option value="{{ $type->id }}" {{ $cours->types->contains($type->id) ? 'selected' : '' }}>
+                            {{ $type->nom }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
                 <label>État</label>
                 <select name="etat" class="w-full p-2 border rounded">
                     <option value="programmé" {{ $cours->etat == 'programmé' ? 'selected' : '' }}>Programmé</option>

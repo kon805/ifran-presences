@@ -25,4 +25,8 @@ class Presence extends Model
     {
         return $this->belongsTo(User::class, 'etudiant_id');
     }
+    public function justification()
+    {
+        return $this->hasOne(Justification::class);
+    }
 }

@@ -1,45 +1,14 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
-
-    <div>
-        <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-            @if (Laravel\Fortify\Features::canUpdateProfileInformation())
-                @livewire('profile.update-profile-information-form')
-
-                <x-section-border />
-            @endif
-
-            @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords()))
-                <div class="mt-10 sm:mt-0">
-                    @livewire('profile.update-password-form')
-                </div>
-
-                <x-section-border />
-            @endif
-
-            @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
-                <div class="mt-10 sm:mt-0">
-                    @livewire('profile.two-factor-authentication-form')
-                </div>
-
-                <x-section-border />
-            @endif
-
-            <div class="mt-10 sm:mt-0">
-                @livewire('profile.logout-other-browser-sessions-form')
-            </div>
-
-            @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
-                <x-section-border />
-
-                <div class="mt-10 sm:mt-0">
-                    @livewire('profile.delete-user-form')
-                </div>
-            @endif
-        </div>
+@extends('layouts.app')
+@section('content')
+<div class="max-w-4xl mx-auto py-10">
+    <h2 class="text-2xl font-bold mb-6">Mon profil</h2>
+    <div class="bg-white shadow rounded p-6">
+        <p><strong>Nom :</strong> {{ Auth::user()->name }}</p>
+        <p><strong>Email :</strong> {{ Auth::user()->email }}</p>
+        <p><strong>Rôle :</strong> {{ Auth::user()->role }}</p>
+        <p><strong>Matricule :</strong> {{ Auth::user()->matricule }}</p>
+        <p><strong>Classe :</strong> {{ Auth::user()->classe ? Auth::user()->classe->nom : 'Aucune' }}</p>
+        <p><strong>Date de création :</strong> {{ Auth::user()->created_at->format('d/m/Y') }}</p>
     </div>
-</x-app-layout>
+</div>
+@endsection

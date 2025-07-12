@@ -13,11 +13,12 @@ class PresenceController extends Controller
 {
     public function index()
     {
-        $cours = Cours::where('professeur_id', \Illuminate\Support\Facades\Auth::id())
-            ->whereDate('date', '<=', now())
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $cours = Cours::query()
+            ->where('professeur_id', $user->id)
             ->orderBy('date', 'desc')
-            ->with('classe')
-            ->get();
+            ->with(['classe', 'matiere'])
+            ->paginate(15);
 
         return view('professeur.presences.index', compact('cours'));
     }

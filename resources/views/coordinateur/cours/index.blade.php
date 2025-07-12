@@ -1,3 +1,4 @@
+{{-- filepath: resources/views/coordinateur/cours/index.blade.php --}}
 @extends('layouts.app')
 @section('content')
 <div class="max-w-6xl mx-auto py-6">
@@ -14,6 +15,7 @@
                 <th class="border px-2 py-2">Classe</th>
                 <th class="border px-2 py-2">Matière</th>
                 <th class="border px-2 py-2">Professeur</th>
+                <th class="border px-2 py-2">Type</th>
                 <th class="border px-2 py-2">Date</th>
                 <th class="border px-2 py-2">Heure</th>
                 <th class="border px-2 py-2">État</th>
@@ -22,22 +24,39 @@
         </thead>
         <tbody>
             @foreach($cours as $c)
+                @if($c->classe && $c->classe->coordinateur_id === Auth::id())
                 <tr>
-                    <td class="border px-2 py-2">{{ $c->classe->nom }}</td>
-                    <td class="border px-2 py-2">{{ $c->matiere }}</td>
-                    <td class="border px-2 py-2">{{ $c->professeur->name }}</td>
+                    <td class="border px-2 py-2">
+                        {{ $c->classe ? $c->classe->nom : 'Non attribuée' }}
+                    </td>
+                    <td class="border px-2 py-2">
+                        {{ $c->matiere && is_object($c->matiere) ? $c->matiere->nom : $c->matiere }}
+                    </td>
+                    <td class="border px-2 py-2">
+                        {{ $c->professeur ? $c->professeur->name : 'Non attribué' }}
+                    </td>
+                    <td class="border px-2 py-2">
+                        @forelse($c->types as $type)
+                            {{ $type->nom }}
+                        @empty
+                            Non défini
+                        @endforelse
+                    </td>
                     <td class="border px-2 py-2">{{ \Carbon\Carbon::parse($c->date)->format('d-m-Y') }}</td>
                     <td class="border px-2 py-2">{{ $c->heure_debut }} - {{ $c->heure_fin }}</td>
                     <td class="border px-2 py-2">{{ ucfirst($c->etat) }}</td>
                     <td class="border px-2 py-2">
-                        <a href="{{ route('emploi-du-temps.edit', $c->id) }}" class="text-blue-600 underline">Modifier</a>
-                        <form action="{{ route('emploi-du-temps.destroy', $c->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600 underline ml-2" onclick="return confirm('Supprimer ce cours ?')">Supprimer</button>
-                        </form>
+
+                            <a href="{{ route('emploi-du-temps.edit', $c->id) }}" class="text-blue-600 underline">Modifier</a>
+                            <form action="{{ route('emploi-du-temps.destroy', $c->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 underline ml-2" onclick="return confirm('Supprimer ce cours ?')">Supprimer</button>
+                            </form>
+
                     </td>
                 </tr>
+                @endif
             @endforeach
         </tbody>
     </table>

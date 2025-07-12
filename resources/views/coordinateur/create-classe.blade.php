@@ -21,6 +21,17 @@
             <label for="nom" class="block font-medium">Nom de la classe</label>
             <input type="text" name="nom" id="nom" class="border rounded w-full p-2" required>
         </div>
+        @if(isset($coordinateurs) && count($coordinateurs))
+        <div>
+            <label for="coordinateur_id" class="block font-medium">Coordinateur</label>
+            <select name="coordinateur_id" id="coordinateur_id" class="border rounded w-full p-2">
+                <option value="">-- Choisir un coordinateur --</option>
+                @foreach($coordinateurs as $coordinateur)
+                    <option value="{{ $coordinateur->id }}">{{ $coordinateur->name }} ({{ $coordinateur->email }})</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
         <div>
             <label class="block font-medium mb-2">Sélectionner les étudiants</label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto border p-2 rounded">
