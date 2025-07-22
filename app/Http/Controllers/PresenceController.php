@@ -17,7 +17,8 @@ class PresenceController extends Controller
         $cours = Cours::query()
             ->where('professeur_id', $user->id)
             ->orderBy('date', 'desc')
-            ->with(['classe', 'matiere'])
+            ->with(['classe', 'matiere', 'presences'])
+            ->withCount('presences')
             ->paginate(15);
 
         return view('professeur.presences.index', compact('cours'));
@@ -27,6 +28,11 @@ class PresenceController extends Controller
     {
         if ($cours->professeur_id !== \Illuminate\Support\Facades\Auth::id()) {
             abort(403);
+        }
+
+        // Empêche la modification si des présences existent déjà
+        if ($cours->presences()->exists()) {
+            abort(403, 'Les présences ont déjà été saisies et ne peuvent plus être modifiées.');
         }
 
         // Vérifie que le cours est dans une fenêtre de 14 jours après la date
@@ -45,24 +51,40 @@ class PresenceController extends Controller
             abort(403);
         }
 
+        // Empêche la création si des présences existent déjà
+        if ($cours->presences()->exists()) {
+            abort(403, 'Les présences ont déjà été saisies et ne peuvent plus être modifiées.');
+        }
+
         $request->validate([
             'presences' => 'required|array'
         ]);
 
         DB::transaction(function () use ($request, $cours) {
             foreach ($request->presences as $etudiant_id => $statut) {
-                Presence::updateOrCreate(
-                    [
-                        'cours_id' => $cours->id,
-                        'etudiant_id' => $etudiant_id
-                    ],
-                    [
-                        'statut' => $statut
-                    ]
-                );
+                Presence::create([
+                    'cours_id' => $cours->id,
+                    'etudiant_id' => $etudiant_id,
+                    'statut' => $statut
+                ]);
             }
         });
 
         return redirect()->route('presences.index')->with('success', 'Présences enregistrées.');
+    }
+
+    public function indexCoordinateur()
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        $cours = Cours::query()
+            ->whereHas('classe', function($query) use ($user) {
+                $query->where('coordinateur_id', $user->id);
+            })
+            ->with(['classe', 'matiere', 'professeur', 'types', 'presences'])
+            ->orderBy('date', 'desc')
+            ->paginate(15);
+
+        return view('coordinateur.presences.index', compact('cours'));
     }
 }

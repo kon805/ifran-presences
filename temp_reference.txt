@@ -1,0 +1,26 @@
+Je vais utiliser le contenu de ce fichier comme référence pour le remplacement :
+
+====ANCIEN_CONTENU====
+    public function index()
+    {
+        $parent = Auth::user();
+
+        // Récupérer les enfants du parent
+        $enfants = $parent->enfants()
+            ->with(['presences' => function($query) {
+====FIN_ANCIEN_CONTENU====
+
+====NOUVEAU_CONTENU====
+    public function index()
+    {
+        $parent = Auth::user();
+
+        // Récupérer les relations parent-enfant
+        $parentsRelations = Parents::where('user_id', $parent->id)
+            ->pluck('etudiant_id');
+
+        // Récupérer les enfants
+        $enfants = User::whereIn('id', $parentsRelations)
+            ->where('role', 'etudiant')
+            ->with(['presences' => function($query) {
+====FIN_NOUVEAU_CONTENU====

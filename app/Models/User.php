@@ -4,6 +4,9 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -46,51 +49,56 @@ class User extends Authenticatable
         'two_factor_secret',
     ];
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array<int, string>
-     */
-    protected $appends = [
-        'profile_photo_url',
+    protected $casts = [
+        'email_verified_at' => 'datetime',
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Get all parent-student relationships where this user is the parent.
      */
-    protected function casts(): array
+    public function parentStudentRelations()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(ParentStudent::class, 'user_id');
     }
 
-        public function classe()
-{
-    return $this->belongsTo(Classe::class);
-}
-
-public function presences()
-{
-    return $this->hasMany(Presence::class, 'etudiant_id');
-}
-
-    public function enfants()
+    /**
+     * Get all parent-student relationships where this user is the student.
+     */
+    public function studentParentRelations()
     {
-        return $this->hasMany(\App\Models\Parents::class, 'user_id');
+        return $this->hasMany(ParentStudent::class, 'etudiant_id');
     }
-    public function parentOf()
+
+    public function classe()
     {
-        return $this->hasMany(\App\Models\Parents::class, 'etudiant_id');
+        return $this->belongsTo(Classe::class);
+    }
+
+    public function presences()
+    {
+        return $this->hasMany(Presence::class, 'etudiant_id');
+    }
+
+    /**
+     * Récupère les enfants (étudiants) associés à ce parent
+     */
+    public function enfants(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'parents', 'user_id', 'etudiant_id')
+                    ->where('role', 'etudiant')
+                    ->withTimestamps();
+    }
+
+    public function parents()
+    {
+        return $this->belongsToMany(User::class, 'parents', 'etudiant_id', 'user_id')
+                    ->where('role', 'parent');
     }
 public function matieres()
 {
     return $this->belongsToMany(\App\Models\Matiere::class)
-        ->withPivot('dropped')
-        ->withTimestamps();
+    ->withPivot('dropped')
+    ->withTimestamps();
 
 }
 

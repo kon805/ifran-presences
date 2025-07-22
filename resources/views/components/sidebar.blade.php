@@ -1,453 +1,137 @@
-  @php $role = Auth::user()->role ?? null; @endphp
-  @if ($role === 'admin')
-   <aside x-data="{ open: true }" class="bg-[#102542] text-white w-72 h-full fixed z-30">
-    <!-- Titre du panneau -->
-    <div class="text-white font-semibold text-[25px] leading-[39px] px-9 pt-7">
-        Tableau de bord<br />administrateur
-    </div>
+@php
+    $role = Auth::user()->role ?? null;
+    $configs = [
+      'admin' => [
+    'color' => 'bg-gradient-to-br from-slate-900
+     via-slate-700
+     to-slate-500',
+    'title' => 'Tableau de bord<br />Administrateur',
+    'links' => [
+        ['route' => 'admin.users.create', 'icon' => 'fa-user-plus', 'text' => 'Créer un utilisateur', 'code_couleur' => '#1E3A8A'],
+        ['route' => 'admin.users.index', 'icon' => 'fa-users', 'text' => 'Liste des utilisateurs', 'code_couleur' => '#1E3A8A'],
+        ['route' => 'admin.matieres.index', 'icon' => 'fa-book', 'text' => 'Liste des matières', 'code_couleur' => '#1E3A8A'],
+        ['route' => 'admin.classes.index', 'icon' => 'fa-school', 'text' => 'Liste des classes', 'code_couleur' => '#1E3A8A'],
+        ['route' => 'admin.users.assign-students', 'icon' => 'fa-user-friends', 'text' => 'Assigner étudiants aux parents', 'code_couleur' => '#1E3A8A'],
+    ]
+],
+'coordinateur' => [
+    'color' => 'bg-gradient-to-br from-red-900 via-red-700 to-red-500',
+    'title' => 'Tableau de bord<br />Coordinateur',
+    'links' => [
+        ['route' => 'coordinateur.classes.index', 'icon' => 'fa-school', 'text' => 'Liste des classes', 'code_couleur' => '#BD2727'],
+        ['route' => 'emploi-du-temps.index', 'icon' => 'fa-calendar-alt', 'text' => 'Emploi du temps', 'code_couleur' => '#BD2727'],
+        ['route' => 'coordinateur.presences.index', 'icon' => 'fa-user-check', 'text' => 'Présences', 'code_couleur' => '#BD2727'],
+        ['route' => 'coordinateur.justifications.index', 'icon' => 'fa-clipboard-check', 'text' => 'Justifications', 'code_couleur' => '#BD2727'],
+        ['route' => 'coordinateur.justifications.history', 'icon' => 'fa-history', 'text' => 'Historique des justifications', 'code_couleur' => '#BD2727'],
+        ['route' => 'coordinateur.planing.index', 'icon' => 'fa-calendar-alt', 'text' => 'Planning hebdomadaire', 'code_couleur' => '#BD2727'],
+    ]
+],
+'professeur' => [
+    'color' => 'bg-gradient-to-br from-yellow-700 via-yellow-600 to-yellow-500',
+    'title' => 'Tableau de bord<br />Professeur',
+    'links' => [
+        ['route' => 'professeur.dashboard', 'icon' => 'fa-chalkboard-teacher', 'text' => 'Dashboard', 'code_couleur' => '#F59E0B'],
+        ['route' => 'presences.index', 'icon' => 'fa-calendar-check', 'text' => 'Emploi du temps', 'code_couleur' => '#F59E0B'],
+    ]
+],
+'etudiant' => [
+    'color' => 'bg-gradient-to-br from-blue-800 via-blue-600 to-blue-400',
+    'title' => 'Tableau de bord<br />Étudiant',
+    'links' => [
+        ['route' => 'etudiant.dashboard', 'icon' => 'fa-user-graduate', 'text' => 'Dashboard Étudiant', 'code_couleur' => '#1E40AF'],
+        ['route' => 'etudiant.emploi-du-temps.index', 'icon' => 'fa-calendar-check', 'text' => 'Emploi du temps', 'code_couleur' => '#1E40AF'],
+        ['route' => 'etudiant.presences.index', 'icon' => 'fa-clipboard-check', 'text' => 'Justifications', 'code_couleur' => '#1E40AF'],
+        ['route' => 'etudiant.matieres.index', 'icon' => 'fa-book', 'text' => 'Matières', 'code_couleur' => '#1E40AF'],
+    ]
+],
+'parent' => [
+    'color' => 'bg-gradient-to-br from-cyan-800 via-cyan-600 to-cyan-400',
+    'title' => 'Tableau de bord<br />Parent',
+    'links' => [
+        ['route' => 'parent.dashboard', 'icon' => 'fa-user-friends', 'text' => 'Dashboard Parent', 'code_couleur' => '#00BFFF'],
+        ['route' => 'parent.presences.index', 'icon' => 'fa-calendar-check', 'text' => 'Présences', 'code_couleur' => '#00BFFF'],
+    ]
+],
 
-    <!-- Séparateur -->
-    <hr class="border-white mt-6 mx-8" />
+    ];
+    $current = $configs[$role] ?? null;
+@endphp
 
-    <!-- Liens pour ADMIN -->
-    @php $role = Auth::user()->role ?? null; @endphp
+@if($current)
+<div x-data="{ open: window.innerWidth >= 768 }" x-init="
+    window.addEventListener('resize', () => { open = window.innerWidth >= 768 });
+" class="relative z-50">
+    <!-- Mobile Burger Button -->
+    <button
+        @click="open = !open"
+        class="md:hidden fixed top-4 left-4 z-60 bg-white/80 backdrop-blur border border-gray-200 shadow-xl p-2 transition-all duration-200"
+        aria-label="Ouvrir le menu"
+        :class="{'hidden': open}"
+        x-show="!open"
+    >
+        <svg width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect y="6" width="26" height="3" rx="1.5" fill="#BD2727"/>
+            <rect y="12" width="26" height="3" rx="1.5" fill="#BD2727"/>
+            <rect y="18" width="26" height="3" rx="1.5" fill="#BD2727"/>
+        </svg>
+    </button>
 
-    <nav class="mt-[50px] space-y-4">
-        @if($role === 'admin')
-            <a href="{{ route('admin.users.create') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-plus text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Créer un utilisateur</span>
-            </a>
-
-            <a href="{{ route('admin.users.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[5px]  hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-users text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des utilisateurs</span>
-            </a>
-
-            <a href="{{ route('admin.matieres.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[5px]  hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-users text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des matieres</span>
-            </a>
-
-             <a href="{{ route('admin.classes.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[5px]  hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-users text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des classes</span>
-            </a>
-
-        @endif
-
-        @if($role === 'coordinateur')
-            <a href="{{ route('coordinateur.classes.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-school text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des classes</span>
-            </a>
-
-            <a href="{{ route('emploi-du-temps.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-alt text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-
-            <a href="{{ route('coordinateur.presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Présences</span>
-            </a>
-        @endif
-
-        @if($role === 'professeur')
-            <a href="/professeur" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-chalkboard-teacher text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard</span>
-            </a>
-
-            <a href="{{ route('presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-        @endif
-
-        @if($role === 'etudiant')
-            <a href="/etudiant" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-graduate text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard Étudiant</span>
-            </a>
-        @endif
-
-        <!-- Profile + Logout -->
-        <div class="mt-6 ml-[15px]">
-            <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                <i class="fas fa-user text-[#BD2727] mr-2"></i> Profil
-            </x-responsive-nav-link>
-
-            <form method="POST" action="{{ route('logout') }}" x-data>
-                @csrf
-                <x-responsive-nav-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                    <i class="fas fa-sign-out-alt text-[#BD2727] mr-2"></i> Déconnexion
-                </x-responsive-nav-link>
-            </form>
+    <!-- Sidebar -->
+    <aside
+        x-show="open"
+        @click.away="if(window.innerWidth < 768){open = false}"
+        class="{{ $current['color'] }} text-white w-72 md:w-64 sm:w-full h-full fixed top-0 left-0 z-50 shadow-2xl transition-all duration-300"
+        style="max-width:100vw; min-height:100vh;"
+        aria-label="Sidebar"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 -translate-x-full"
+        x-transition:enter-end="opacity-100 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-x-0"
+        x-transition:leave-end="opacity-0 -translate-x-full"
+    >
+        <!-- Close button mobile -->
+        <button
+            @click="open = false"
+            class="md:hidden absolute top-4 right-4 bg-white/80 backdrop-blur border border-gray-200 shadow-xl p-2 transition-all duration-200"
+            aria-label="Fermer le menu"
+        >
+            <svg width="24" height="24" fill="none"><line x1="4" y1="4" x2="20" y2="20" stroke="#BD2727" stroke-width="2"/><line x1="20" y1="4" x2="4" y2="20" stroke="#BD2727" stroke-width="2"/></svg>
+        </button>
+        <!-- Titre -->
+        <div class="font-semibold text-[25px] leading-[39px] px-7 pt-7 drop-shadow-lg">
+            {!! $current['title'] !!}
         </div>
-    </nav>
-   </aside>
+        <hr class="border-white mt-6 mx-8 opacity-60" />
 
-  @endif
+        <!-- Navigation -->
+        <nav class="mt-[40px] space-y-4">
+            @foreach($current['links'] as $link)
+                <a href="{{ route($link['route']) }}" class="flex items-center bg-white bg-opacity-10 rounded-xl shadow-md h-[55px] mx-4 hover:scale-[1.07] hover:bg-opacity-20 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white" aria-label="{{ $link['text'] }}">
+                    <div class="w-[36px] h-[36px] bg-white rounded-lg flex items-center justify-center ml-3 shadow">
+                        <i class="fas {{ $link['icon'] }}  text-[22px]" style="color: {{ $link['code_couleur'] }};"  ></i>
+                    </div>
+                    <span class="text-white font-bold text-[19px] ml-5">{{ $link['text'] }}</span>
+                </a>
+            @endforeach
 
-
-@if ($role === 'coordinateur')
-     <aside x-data="{ open: true }" class="bg-[#7a1414] text-white w-72 h-full fixed z-30">
-    <!-- Titre du panneau -->
-    <div class="text-white font-semibold text-[25px] leading-[39px] px-9 pt-7">
-        Tableau de bord<br />administrateur
-    </div>
-
-    <!-- Séparateur -->
-    <hr class="border-white mt-6 mx-8" />
-
-    <!-- Liens pour ADMIN -->
-    @php $role = Auth::user()->role ?? null; @endphp
-
-    <nav class="mt-[50px] space-y-4">
-        @if($role === 'admin')
-            <a href="{{ route('admin.users.create') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-plus text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Créer un utilisateur</span>
-            </a>
-
-            <a href="{{ route('admin.users.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[5px]  hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-users text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des utilisateurs</span>
-            </a>
-        @endif
-
-        @if($role === 'coordinateur')
-                  <a href="{{ route('coordinateur.classes.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-school text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des classes</span>
-            </a>
-
-            <a href="{{ route('emploi-du-temps.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-alt text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-
-            <a href="{{ route('coordinateur.presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Présences</span>
-            </a>
-
-            <a href="{{ route('coordinateur.justifications.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-clipboard-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Justifications</span>
-            </a>
-
-
-            <a href="{{ route('coordinateur.justifications.history') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-history text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Historique des justifications</span>
-            </a>
-
-
-        @endif
-
-        @if($role === 'professeur')
-            <a href="/professeur" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-chalkboard-teacher text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard</span>
-            </a>
-
-            <a href="{{ route('presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-        @endif
-
-        @if($role === 'etudiant')
-            <a href="/etudiant" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-graduate text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard Étudiant</span>
-            </a>
-
-               <a href="{{route('etu')}}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-graduate text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard Étudiant</span>
-            </a>
-
-
-        @endif
-
-        <!-- Profile + Logout -->
-        <div class="mt-6 ml-[15px]">
-            <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                <i class="fas fa-user text-[#BD2727] mr-2"></i> Profil
-            </x-responsive-nav-link>
-
-            <form method="POST" action="{{ route('logout') }}" x-data>
-                @csrf
-                <x-responsive-nav-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                    <i class="fas fa-sign-out-alt text-[#BD2727] mr-2"></i> Déconnexion
+            <!-- Profile + Logout -->
+            <div class="mt-8 ml-4">
+                <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
+                    <i class="fas fa-user text-[#BD2727] mr-2"></i> Profil
                 </x-responsive-nav-link>
-            </form>
+                <form method="POST" action="{{ route('logout') }}" x-data>
+                    @csrf
+                    <x-responsive-nav-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                        <i class="fas fa-sign-out-alt text-[#BD2727] mr-2"></i> Déconnexion
+                    </x-responsive-nav-link>
+                </form>
+            </div>
+        </nav>
+        <!-- Footer (optionnel) -->
+        <div class="absolute bottom-4 left-0 w-full text-center text-xs text-white opacity-60">
+            &copy; {{ date('Y') }} - Mon Application
         </div>
-    </nav>
-     </aside>
-
- @endif
-
-
-@if ($role === 'professeur')
-<aside x-data="{ open: true }" class="bg-[#de8d22] text-white w-72 h-full fixed z-30">
-    <!-- Titre du panneau -->
-    <div class="text-white font-semibold text-[25px] leading-[39px] px-9 pt-7">
-        Tableau de bord<br />administrateur
-    </div>
-
-    <!-- Séparateur -->
-    <hr class="border-white mt-6 mx-8" />
-
-    <!-- Liens pour ADMIN -->
-    @php $role = Auth::user()->role ?? null; @endphp
-
-    <nav class="mt-[50px] space-y-4">
-        @if($role === 'admin')
-            <a href="{{ route('admin.users.create') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-plus text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Créer un utilisateur</span>
-            </a>
-
-            <a href="{{ route('admin.users.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[5px]  hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-users text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des utilisateurs</span>
-            </a>
-        @endif
-
-        @if($role === 'coordinateur')
-            <a href="{{ route('coordinateur.classes.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-school text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des classes</span>
-            </a>
-
-            <a href="{{ route('emploi-du-temps.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-alt text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-
-            <a href="{{ route('coordinateur.presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Présences</span>
-            </a>
-        @endif
-
-        @if($role === 'professeur')
-            <a href="/professeur" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-chalkboard-teacher text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard</span>
-            </a>
-
-            <a href="{{ route('presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-        @endif
-
-        @if($role === 'etudiant')
-            <a href="/etudiant" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-graduate text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard Étudiant</span>
-            </a>
-        @endif
-
-        <!-- Profile + Logout -->
-        <div class="mt-6 ml-[15px]">
-            <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                <i class="fas fa-user text-[#BD2727] mr-2"></i> Profil
-            </x-responsive-nav-link>
-
-            <form method="POST" action="{{ route('logout') }}" x-data>
-                @csrf
-                <x-responsive-nav-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                    <i class="fas fa-sign-out-alt text-[#BD2727] mr-2"></i> Déconnexion
-                </x-responsive-nav-link>
-            </form>
-        </div>
-    </nav>
-   </aside>
-
+    </aside>
+</div>
 @endif
-
-
-@if ($role === 'etudiant')
-   <aside x-data="{ open: true }" class="bg-[#2b538c] text-white w-72 h-full fixed z-30">
-    <!-- Titre du panneau -->
-    <div class="text-white font-semibold text-[25px] leading-[39px] px-9 pt-7">
-        Tableau de bord<br />administrateur
-    </div>
-
-    <!-- Séparateur -->
-    <hr class="border-white mt-6 mx-8" />
-
-    <!-- Liens pour ADMIN -->
-    @php $role = Auth::user()->role ?? null; @endphp
-
-    <nav class="mt-[50px] space-y-4">
-        @if($role === 'admin')
-            <a href="{{ route('admin.users.create') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-plus text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Créer un utilisateur</span>
-            </a>
-
-            <a href="{{ route('admin.users.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[55px] ml-[15px] mr-[5px]  hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-users text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des utilisateurs</span>
-            </a>
-        @endif
-
-        @if($role === 'coordinateur')
-            <a href="{{ route('coordinateur.classes.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-school text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Liste des classes</span>
-            </a>
-
-            <a href="{{ route('emploi-du-temps.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-alt text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-
-            <a href="{{ route('coordinateur.presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Présences</span>
-            </a>
-        @endif
-
-        @if($role === 'professeur')
-            <a href="/professeur" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-chalkboard-teacher text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard</span>
-            </a>
-
-            <a href="{{ route('presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px] w-[322px] h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[53px] h-[53px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-        @endif
-
-        @if($role === 'etudiant')
-            <a href="/etudiant" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-user-graduate text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Dashboard Étudiant</span>
-            </a>
-
-            <a href="{{ route('etudiant.emploi-du-temps.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-calendar-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Emploi du temps</span>
-            </a>
-
-            <a href="{{ route('etudiant.presences.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-clipboard-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">Justifications</span>
-            </a>
-
-             <a href="{{ route('etudiant.matieres.index') }}" class="flex items-center bg-[#BD2727] rounded-[13px]  h-[67px] ml-[15px] hover:opacity-90">
-                <div class="w-[30px] h-[30px] bg-white rounded-lg flex items-center justify-center ml-3">
-                    <i class="fas fa-clipboard-check text-[#BD2727]"></i>
-                </div>
-                <span class="text-white font-bold text-[22px] ml-5">matiere</span>
-            </a>
-
-
-
-        @endif
-
-        <!-- Profile + Logout -->
-        <div class="mt-6 ml-[15px]">
-            <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                <i class="fas fa-user text-[#BD2727] mr-2"></i> Profil
-            </x-responsive-nav-link>
-
-            <form method="POST" action="{{ route('logout') }}" x-data>
-                @csrf
-                <x-responsive-nav-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                    <i class="fas fa-sign-out-alt text-[#BD2727] mr-2"></i> Déconnexion
-                </x-responsive-nav-link>
-            </form>
-        </div>
-    </nav>
-   </aside>
-
-  @endif
-

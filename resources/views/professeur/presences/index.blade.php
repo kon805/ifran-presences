@@ -27,6 +27,7 @@
                 <th class="border px-3 py-2">Matière</th>
                 <th class="border px-3 py-2">Date</th>
                 <th class="border px-3 py-2">Heure</th>
+                <th class="border px-3 py-2">Statut</th>
                 <th class="border px-3 py-2">Action</th>
             </tr>
         </thead>
@@ -38,16 +39,46 @@
                     <td class="border px-3 py-2">{{ \Carbon\Carbon::parse($c->date)->format('d-m-Y') }}</td>
                     <td class="border px-3 py-2">{{ $c->heure_debut }} - {{ $c->heure_fin }}</td>
                     <td class="border px-3 py-2">
-                        @if($c->classe && $c->matiere)
-                            <a href="{{ route('presences.edit', $c->id) }}" class="text-indigo-600 underline">Saisir présences</a>
+                        @if($c->presences_count > 0)
+                            <div class="flex items-center">
+                                <div class="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
+                                <span class="text-sm text-gray-700">{{ $c->presences_count }} présences saisies</span>
+                            </div>
+                        @elseif(Carbon\Carbon::parse($c->date)->isPast())
+                            <div class="flex items-center">
+                                <div class="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div>
+                                <span class="text-sm text-gray-700">Non saisies</span>
+                            </div>
                         @else
+                            <div class="flex items-center">
+                                <div class="h-2.5 w-2.5 rounded-full bg-gray-300 mr-2"></div>
+                                <span class="text-sm text-gray-700">En attente</span>
+                            </div>
+                        @endif
+                    </td>
+                    <td class="border px-3 py-2">
+                        @if(!$c->classe || !$c->matiere)
                             <span class="text-gray-500 italic">Configuration incomplète</span>
+                        @elseif($c->presences_count > 0)
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                    Présences saisies et verrouillées
+                                </span>
+                                <span class="text-sm text-gray-500">({{ $c->presences_count }} étudiants)</span>
+                            </div>
+                        @elseif($c->classe && $c->matiere && (!Carbon\Carbon::parse($c->date)->isPast() || Carbon\Carbon::parse($c->date)->isToday()))
+                            <a href="{{ route('presences.edit', $c->id) }}"
+                               class="inline-flex items-center px-3 py-1 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                Saisir présences
+                            </a>
+                        @else
+                            <span class="text-gray-500 italic">Non saisies (délai expiré)</span>
                         @endif
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="border px-3 py-4 text-center text-gray-500">
+                    <td colspan="6" class="border px-3 py-4 text-center text-gray-500">
                         Aucun cours programmé n'est disponible pour la saisie des présences.
                     </td>
                 </tr>

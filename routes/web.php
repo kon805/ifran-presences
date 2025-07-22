@@ -9,21 +9,27 @@ use App\Http\Controllers\EtudiantPresenceController;
 use App\Http\Controllers\EtudiantEmploiTempsController;
 use App\Http\Controllers\EtudiantMatiereController;
 use App\Http\Controllers\JustificationController;
+use App\Http\Controllers\EmploiDuTempsController;
+use App\Http\Controllers\ParentPresenceController;
+use App\Http\Controllers\AssignStudentsController;
 
 
 
 
+use App\Http\Controllers\DashboardController;
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', function (\Illuminate\Http\Request $request) {
         $role = $request->user()->role;
         return match ($role) {
             'admin' => redirect('/admin/dashboard'),
-            'coordinateur' => redirect('/coordinateur'),
+            'coordinateur' => redirect()->route('coordinateur.dashboard'),
             'professeur' => redirect('/professeur'),
             'etudiant' => redirect('/etudiant'),
+            'parent' => redirect('/parent')->name('parent.presences.index'),
             default => abort(403),
         };
     });
+
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', fn () => view('admin.dashboard'))->name('admin.dashboard');
@@ -34,7 +40,12 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
         Route::put('/users/{id}', [AdminController::class, 'update'])->name('admin.users.update');
         Route::delete('/users/{id}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
 
-          // Gestion des matières
+        // Routes pour l'assignation des étudiants aux parents
+        Route::get('/users/assign-students', [AssignStudentsController::class, 'index'])->name('admin.users.assign-students');
+        Route::post('/users/assign-students', [AssignStudentsController::class, 'assign']);
+        Route::delete('/users/assign-students/unassign', [AssignStudentsController::class, 'unassign'])->name('admin.users.unassign-student');
+
+        // Gestion des matières
         Route::get('/matieres', [\App\Http\Controllers\MatiereController::class, 'index'])->name('admin.matieres.index');
         Route::get('/matieres/create', [\App\Http\Controllers\MatiereController::class, 'create'])->name('admin.matieres.create');
         Route::post('/matieres', [\App\Http\Controllers\MatiereController::class, 'store'])->name('admin.matieres.store');
@@ -53,7 +64,13 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
     });
 
     Route::middleware('role:coordinateur')->prefix('coordinateur')->group(function () {
-        Route::get('/', fn () => view('coordinateur.dashboard'))->name('coordinateur.dashboard');
+
+
+         Route::get('/', [DashboardController::class, 'index'])->name('coordinateur.dashboard');
+        // Routes emploi du temps
+        Route::get('/emplois-du-temps', [EmploiDuTempsController::class, 'index'])->name('coordinateur.planing.index');
+        Route::get('/emplois-du-temps/pdf/export', [EmploiDuTempsController::class, 'exportPdf'])->name('coordinateur.planning.export');
+
         Route::get('/classes', [ClasseController::class, 'index'])->name('coordinateur.classes.index');
 
         Route::get('/classes/{id}', [ClasseController::class, 'show'])->name('coordinateur.classes.show');
@@ -72,7 +89,7 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
         Route::get('/justifications/history', [\App\Http\Controllers\JustificationController::class, 'history'])
             ->name('coordinateur.justifications.history');
 
-        Route::get('/presences', [PresenceConsultationController::class, 'index'])->name('coordinateur.presences.index');
+        Route::get('/presences', [PresenceController::class, 'indexCoordinateur'])->name('coordinateur.presences.index');
         Route::get('/presences/{cours}', [PresenceConsultationController::class, 'show'])->name('coordinateur.presences.show');
         Route::get('/presences/{cours}/edit', [PresenceConsultationController::class, 'edit'])->name('coordinateur.presences.edit');
         Route::put('/presences/{cours}', [PresenceConsultationController::class, 'update'])->name('coordinateur.presences.update');
@@ -104,10 +121,18 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
         Route::get('/matieres/{matiere}', [EtudiantMatiereController::class, 'show'])->name('etudiant.matieres.show');
     });
 
+Route::middleware('role:parent')->prefix('parent')->group(function () {
+    Route::get('/', fn () => view('parent.dashboard'))->name('parent.dashboard');
+
+    Route::get('/absences', [ParentPresenceController::class, 'index'])->name('parent.presences.index');
+});
+
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+
 
 Route::middleware([
     'auth:sanctum',

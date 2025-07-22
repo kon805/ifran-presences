@@ -20,6 +20,8 @@ class LoginResponse implements LoginResponseContract
                     return redirect('/professeur');
                 case 'etudiant':
                     return redirect('/etudiant');
+                case 'parent':
+                    return redirect('/parent');
                 default:
                     abort(403);
             }

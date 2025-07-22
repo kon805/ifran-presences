@@ -76,11 +76,13 @@ class CoursController extends Controller
         $emploi_du_temps = Cours::with('types')->findOrFail($id);
         $classes = Classe::all();
         $professeurs = User::where('role', 'professeur')->get();
+        $matieres = \App\Models\Matiere::all();
         $typesCours = \App\Models\TypeCours::all();
         return view('coordinateur.cours.edit', [
             'cours' => $emploi_du_temps,
             'classes' => $classes,
             'professeurs' => $professeurs,
+            'matieres' => $matieres,
             'typesCours' => $typesCours,
         ]);
     }
@@ -90,7 +92,7 @@ class CoursController extends Controller
         $request->validate([
             'classe_id' => 'required|exists:classes,id',
             'professeur_id' => 'required|exists:users,id',
-            'matiere' => 'required|string',
+            'matiere_id' => 'required|exists:matieres,id',
             'date' => 'required|date',
             'heure_debut' => 'required',
             'heure_fin' => 'required',
@@ -99,12 +101,20 @@ class CoursController extends Controller
         ]);
 
         $cours = Cours::findOrFail($id);
-        $cours->update($request->only('classe_id', 'professeur_id', 'matiere', 'date', 'heure_debut', 'heure_fin', 'etat'));
+        $cours->update($request->only([
+            'classe_id',
+            'professeur_id',
+            'matiere_id',
+            'date',
+            'heure_debut',
+            'heure_fin',
+            'etat'
+        ]));
 
         // Mettre à jour le type de cours
         $cours->types()->sync([$request->type_cours_id]);
 
-        return redirect()->route('emploi-du-temps.index')->with('success', 'Cours modifié.');
+        return redirect()->route('emploi-du-temps.index')->with('success', 'Cours modifié avec succès.');
     }
 
     public function destroy(Cours $emploi_du_temps)

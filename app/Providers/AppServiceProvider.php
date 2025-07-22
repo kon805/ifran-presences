@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
                 'coordinateur' => redirect('/coordinateur'),
                 'professeur' => redirect('/professeur'),
                 'etudiant' => redirect('/etudiant'),
+                'parent' => redirect('/parent'),
                 default => abort(403),
             };
         });
