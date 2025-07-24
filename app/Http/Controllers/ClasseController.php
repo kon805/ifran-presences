@@ -146,39 +146,23 @@ class ClasseController extends Controller
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'coordinateur_id' => 'required|exists:users,id',
-            'annee_academique' => 'required|string|regex:/^\d{4}-\d{4}$/',
-            'semestre' => 'required|in:1,2',
+            'annee_academique' => 'required|string',
+            'etudiants' => 'nullable|array',
+            'etudiants.*' => 'exists:users,id'
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Créer la première classe pour le semestre demandé
-            $classe1 = Classe::create([
-                'nom' => $validated['nom'],
-                'coordinateur_id' => $validated['coordinateur_id'],
-                'annee_academique' => $validated['annee_academique'],
-                'semestre' => $validated['semestre']
-            ]);
-
-            // Créer automatiquement la classe pour l'autre semestre
-            $autreSemestre = $validated['semestre'] === '1' ? '2' : '1';
-            $classe2 = Classe::create([
-                'nom' => str_replace("S{$validated['semestre']}", "S{$autreSemestre}", $validated['nom']),
-                'coordinateur_id' => $validated['coordinateur_id'],
-                'annee_academique' => $validated['annee_academique'],
-                'semestre' => $autreSemestre
-            ]);
-
-            DB::commit();
+            // Utiliser la méthode statique du modèle pour créer la classe
+            $classe = Classe::creerClasse($validated);
             return redirect()->route('admin.classes.index')
-                ->with('success', "Les classes des semestres 1 et 2 ont été créées avec succès pour l'année {$validated['annee_academique']}");
+                ->with('success', "La classe a été créée avec succès pour le semestre 1 de l'année {$validated['annee_academique']}. Le semestre 2 sera créé automatiquement lors de la clôture du semestre 1.");
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Erreur lors de la création de la classe: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['error' => 'Une erreur est survenue lors de la création des classes.']);
+                ->withErrors(['error' => 'Une erreur est survenue lors de la création de la classe: ' . $e->getMessage()]);
         }
     }
 
@@ -193,61 +177,88 @@ class ClasseController extends Controller
     }
 
     // Termine le semestre et migre les étudiants vers le semestre suivant
-    public function terminerSemestre($id)
-    {
+
+public function terminerSemestre($id)
+{
+    try {
+        DB::beginTransaction();
+
         $user = Auth::user();
         $classe = Classe::findOrFail($id);
 
         // Vérifications de base
         if (!in_array($user->role, ['admin', 'coordinateur'])) {
-            return redirect()->back()->withErrors(['error' => 'Accès non autorisé.']);
+            throw new \Exception('Accès non autorisé.');
         }
 
         if ($user->role === 'coordinateur' && $classe->coordinateur_id !== $user->id) {
-            return redirect()->back()->withErrors(['error' => 'Vous n\'êtes pas le coordinateur de cette classe.']);
+            throw new \Exception('Vous n\'êtes pas le coordinateur de cette classe.');
         }
 
         if ($classe->semestre !== '1') {
-            return redirect()->back()->withErrors(['error' => 'Seul le semestre 1 peut être terminé.']);
+            throw new \Exception('Seul le semestre 1 peut être terminé.');
         }
 
         if ($classe->statut === 'termine') {
-            return redirect()->back()->withErrors(['error' => 'Cette classe est déjà terminée.']);
+            throw new \Exception('Cette classe est déjà terminée.');
         }
 
-        // Trouver et vérifier la classe du semestre 2
-        $classeSemestre2 = Classe::where('annee_academique', $classe->annee_academique)
-                               ->where('semestre', '2')
-                               ->first();
+        // Trouver ou créer la classe du semestre 2
+        $classeSemestre2 = Classe::where([
+            'annee_academique' => $classe->annee_academique,
+            'semestre' => '2',
+            'coordinateur_id' => $classe->coordinateur_id
+        ])->first();
 
         if (!$classeSemestre2) {
-            return redirect()->back()->withErrors(['error' => 'La classe du semestre 2 n\'existe pas.']);
+            // Créer la classe du semestre 2
+            $classeSemestre2 = Classe::create([
+                'nom' => $classe->nom,
+                'coordinateur_id' => $classe->coordinateur_id,
+                'annee_academique' => $classe->annee_academique,
+                'semestre' => '2',
+                'semestre_actuel' => 2,
+                'semestre_termine' => false,
+                'statut' => 'en_cours'
+            ]);
         }
 
-        try {
-            // Obtenir les étudiants du semestre 1
-            $etudiants = $classe->etudiants;
+        // Obtenir et migrer les étudiants non "dropped" vers le semestre 2
+        $etudiantsNonDropped = $classe->etudiants()
+            ->wherePivot('dropped', false)
+            ->get();
 
-            // Les ajouter au semestre 2 s'il y en a
-            if ($etudiants->count() > 0) {
-                foreach ($etudiants as $etudiant) {
-                    if (!$classeSemestre2->etudiants->contains($etudiant->id)) {
-                        $classeSemestre2->etudiants()->attach($etudiant->id);
-                    }
-                }
-            }
-
-            // Marquer le semestre comme terminé
-            DB::table('classes')
-                ->where('id', $classe->id)
-                ->update(['statut' => 'termine']);
-
-            return redirect()->back()->with('success',
-                'Semestre terminé. ' . $etudiants->count() . ' étudiants migrés vers le semestre 2.');
-
-        } catch (\Exception $e) {
-            Log::error('Erreur lors de la terminaison du semestre: ' . $e->getMessage());
-            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue. Veuillez réessayer.']);
+        if ($etudiantsNonDropped->count() > 0) {
+            $classeSemestre2->etudiants()->sync(
+                $etudiantsNonDropped->pluck('id')->toArray()
+            );
         }
+
+        // Marquer le semestre 1 comme terminé
+        $updated = DB::table('classes')
+            ->where('id', $classe->id)
+            ->update([
+                'statut' => 'termine',
+                'semestre_termine' => true
+            ]);
+
+        if (!$updated) {
+            throw new \Exception('Erreur lors de la terminaison du semestre.');
+        }
+
+        // Rafraîchir l'instance depuis la base de données
+        $classe->refresh();
+
+        DB::commit();
+        return redirect()->back()->with('success',
+            'Semestre terminé. ' . $etudiantsNonDropped->count() . ' étudiants non dropped migrés vers le semestre 2.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erreur lors de la terminaison du semestre: ' . $e->getMessage());
+        return redirect()->back()
+            ->withInput()
+            ->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()]);
     }
+}
 }

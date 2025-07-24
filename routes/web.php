@@ -71,12 +71,24 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
         Route::get('/emplois-du-temps', [EmploiDuTempsController::class, 'index'])->name('coordinateur.planing.index');
         Route::get('/emplois-du-temps/pdf/export', [EmploiDuTempsController::class, 'exportPdf'])->name('coordinateur.planning.export');
 
+        // Route pour afficher les étudiants en statut dropped
+        Route::get('/classes/{classeId}/dropped-etudiants', [\App\Http\Controllers\EtudiantStatusController::class, 'showClasseDroppedEtudiants'])
+            ->name('coordinateur.classes.dropped-etudiants');
+
+        // Route pour recalculer manuellement le statut dropped pour un étudiant dans une matière
+        Route::post('/recalculate-status/{etudiantId}/{matiereId}', [\App\Http\Controllers\EtudiantStatusController::class, 'recalculateMatiere'])
+            ->name('coordinateur.recalculate-status');
+
         Route::get('/classes', [ClasseController::class, 'index'])->name('coordinateur.classes.index');
 
         Route::get('/classes/{id}', [ClasseController::class, 'show'])->name('coordinateur.classes.show');
         Route::get('/classes/{id}/edit', [ClasseController::class, 'edit'])->name('coordinateur.classes.edit');
         Route::put('/classes/{id}', [ClasseController::class, 'update'])->name('coordinateur.classes.update');
-        Route::post('/classes/{id}/terminer-semestre', [ClasseController::class, 'terminerSemestre'])->name('coordinateur.classes.terminer-semestre');
+        Route::post('/classes/{id}/terminer-semestre', [ClasseController::class, 'terminerSemestre'])
+            ->name('coordinateur.classes.terminer-semestre');
+
+
+
 
         // Routes pour les justifications
         Route::get('/justifications', [\App\Http\Controllers\JustificationController::class, 'index'])
@@ -96,6 +108,9 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
 
         Route::resource('emploi-du-temps', CoursController::class);
     });
+
+
+
 
     Route::middleware('role:professeur')->prefix('professeur')->group(function () {
         Route::get('/', fn () => view('professeur.dashboard'))->name('professeur.dashboard');
@@ -119,6 +134,10 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
         // Routes pour les matières
         Route::get('/matieres', [EtudiantMatiereController::class, 'index'])->name('etudiant.matieres.index');
         Route::get('/matieres/{matiere}', [EtudiantMatiereController::class, 'show'])->name('etudiant.matieres.show');
+
+        // Route pour afficher le statut "dropped"
+        Route::get('/status/dropped', [\App\Http\Controllers\EtudiantStatusController::class, 'showDroppedStatus'])
+            ->name('etudiant.status.dropped');
     });
 
 Route::middleware('role:parent')->prefix('parent')->group(function () {
@@ -134,13 +153,3 @@ Route::get('/', function () {
 
 
 
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-    'role:admin',
-])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-});

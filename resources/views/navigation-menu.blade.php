@@ -66,6 +66,21 @@
                             {{ __('Dashboard Étudiant') }}
                         </x-nav-link>
                     </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('etudiant.matieres.index') }}" :active="request()->routeIs('etudiant.matieres.index')">
+                            {{ __('Mes matières') }}
+                        </x-nav-link>
+                    </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('etudiant.presences.index') }}" :active="request()->routeIs('etudiant.presences.index')">
+                            {{ __('Mes présences') }}
+                        </x-nav-link>
+                    </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('etudiant.status.dropped') }}" :active="request()->routeIs('etudiant.status.dropped')">
+                            {{ __('Mon statut') }}
+                        </x-nav-link>
+                    </div>
                 @endif
             </div>
 

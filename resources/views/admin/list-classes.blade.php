@@ -51,12 +51,12 @@
                             </span>
                         </td>
                         <td class="px-3 py-3 text-center">
-                            @if($classe->statut === 'en_cours')
+                            @if($classe->statut === 'en_cours' && !$classe->semestre_termine)
                                 <a href="{{ route('coordinateur.classes.edit', $classe->id) }}"
                                    class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 transition mr-2 shadow">
                                     <i class="fa-solid fa-pen-to-square mr-1"></i> Modifier
                                 </a>
-                                @if($classe->semestre === '1')
+                                @if($classe->semestre === '1' && !$classe->semestre_termine)
                                     @if(Auth::user()->role === 'admin')
                                         <form action="{{ route('admin.classes.terminer-semestre', $classe->id) }}" method="POST" class="inline"
                                               onsubmit="return confirm('Êtes-vous sûr de vouloir terminer ce semestre ? Les étudiants seront automatiquement migrés vers le semestre 2 et vous ne pourrez plus modifier ce semestre.');">
@@ -75,12 +75,25 @@
                                                 <i class="fa-solid fa-circle-check mr-1"></i> Terminer le semestre
                                             </button>
                                         </form>
+
+
+                                    @else
+                                        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-500 italic shadow">
+                                            <i class="fa-solid fa-lock mr-1"></i> Action non autorisée
+                                        </span>
                                     @endif
                                 @endif
                             @else
                                 <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-500 italic shadow">
                                     <i class="fa-solid fa-calendar-check mr-1"></i> Semestre terminé
                                 </span>
+
+                                @if(Auth::user()->role === 'admin' || (Auth::user()->role === 'coordinateur' && $classe->coordinateur_id === Auth::id()))
+                                <a href="{{ route('coordinateur.classes.dropped-etudiants', $classe->id) }}"
+                                   class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition shadow ml-2">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Voir étudiants en risque
+                                </a>
+                                @endif
                             @endif
                             @if(Auth::user()->role === 'admin')
                                 <form action="{{ route('admin.classes.delete', $classe->id) }}" method="POST" class="inline"

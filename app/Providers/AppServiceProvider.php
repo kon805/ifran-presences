@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Pagination\Paginator;
+use App\Models\Presence;
+use App\Observers\PresenceObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Enregistrer l'observer pour les présences
+        Presence::observe(PresenceObserver::class);
+
         // Utiliser Tailwind CSS pour la pagination
         Paginator::useBootstrapFive();
         Route::middleware('web')

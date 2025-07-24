@@ -2,19 +2,19 @@
     $role = Auth::user()->role ?? null;
     $configs = [
       'admin' => [
-    'color' => 'bg-gradient-to-br from-slate-900
-     via-slate-700
-     to-slate-500',
+     'logo' => asset('img/if3.png'),
+    'color' => ' bg-gradient-to-br from-black via-gray-900 to-neutral-800',
     'title' => 'Tableau de bord<br />Administrateur',
     'links' => [
-        ['route' => 'admin.users.create', 'icon' => 'fa-user-plus', 'text' => 'Créer un utilisateur', 'code_couleur' => '#1E3A8A'],
-        ['route' => 'admin.users.index', 'icon' => 'fa-users', 'text' => 'Liste des utilisateurs', 'code_couleur' => '#1E3A8A'],
-        ['route' => 'admin.matieres.index', 'icon' => 'fa-book', 'text' => 'Liste des matières', 'code_couleur' => '#1E3A8A'],
-        ['route' => 'admin.classes.index', 'icon' => 'fa-school', 'text' => 'Liste des classes', 'code_couleur' => '#1E3A8A'],
-        ['route' => 'admin.users.assign-students', 'icon' => 'fa-user-friends', 'text' => 'Assigner étudiants aux parents', 'code_couleur' => '#1E3A8A'],
+        ['route' => 'admin.users.create', 'icon' => 'fa-user-plus', 'text' => 'Créer un utilisateur', 'code_couleur' => '#1E1E1E'],
+        ['route' => 'admin.users.index', 'icon' => 'fa-users', 'text' => 'Liste des utilisateurs', 'code_couleur' => '#1E1E1E'],
+        ['route' => 'admin.matieres.index', 'icon' => 'fa-book', 'text' => 'Liste des matières', 'code_couleur' => '#1E1E1E'],
+        ['route' => 'admin.classes.index', 'icon' => 'fa-school', 'text' => 'Liste des classes', 'code_couleur' => '#1E1E1E'],
+        ['route' => 'admin.users.assign-students', 'icon' => 'fa-user-friends', 'text' => 'Assigner étudiants aux parents', 'code_couleur' => '#1E1E1E'],
     ]
 ],
 'coordinateur' => [
+    'logo' => asset('img/if3.png'),
     'color' => 'bg-gradient-to-br from-red-900 via-red-700 to-red-500',
     'title' => 'Tableau de bord<br />Coordinateur',
     'links' => [
@@ -27,6 +27,7 @@
     ]
 ],
 'professeur' => [
+    'logo' => asset('img/if3.png'),
     'color' => 'bg-gradient-to-br from-yellow-700 via-yellow-600 to-yellow-500',
     'title' => 'Tableau de bord<br />Professeur',
     'links' => [
@@ -35,6 +36,7 @@
     ]
 ],
 'etudiant' => [
+    'logo' => asset('img/if3.png'),
     'color' => 'bg-gradient-to-br from-blue-800 via-blue-600 to-blue-400',
     'title' => 'Tableau de bord<br />Étudiant',
     'links' => [
@@ -42,9 +44,11 @@
         ['route' => 'etudiant.emploi-du-temps.index', 'icon' => 'fa-calendar-check', 'text' => 'Emploi du temps', 'code_couleur' => '#1E40AF'],
         ['route' => 'etudiant.presences.index', 'icon' => 'fa-clipboard-check', 'text' => 'Justifications', 'code_couleur' => '#1E40AF'],
         ['route' => 'etudiant.matieres.index', 'icon' => 'fa-book', 'text' => 'Matières', 'code_couleur' => '#1E40AF'],
+        ['route' => 'etudiant.status.dropped', 'icon' => 'fa-user-times', 'text' => 'Statut Dropped', 'code_couleur' => '#1E40AF'],
     ]
 ],
 'parent' => [
+    'logo' => asset('img/if3.png'),
     'color' => 'bg-gradient-to-br from-cyan-800 via-cyan-600 to-cyan-400',
     'title' => 'Tableau de bord<br />Parent',
     'links' => [
@@ -98,11 +102,15 @@
         >
             <svg width="24" height="24" fill="none"><line x1="4" y1="4" x2="20" y2="20" stroke="#BD2727" stroke-width="2"/><line x1="20" y1="4" x2="4" y2="20" stroke="#BD2727" stroke-width="2"/></svg>
         </button>
+        <!-- Logo -->
+        <div class="flex items-center justify-center h-24 backdrop-blur-md rounded-b-lg shadow-lg">
+            <img src="{{ $current['logo'] }}" alt="IF3 logo featuringr" class="w-44 h-24 object-contain md:object-cover rounded-lg shadow-lg transform transition duration-500 hover:scale-105 hover:rotate-1 drop-shadow-2xl" loading="lazy">
+        </div>
         <!-- Titre -->
-        <div class="font-semibold text-[25px] leading-[39px] px-7 pt-7 drop-shadow-lg">
+        <div class="font-semibold text-[20px] leading-[30px] px-7 pt-5 drop-shadow-lg text-center ">
             {!! $current['title'] !!}
         </div>
-        <hr class="border-white mt-6 mx-8 opacity-60" />
+        <hr class="border-white mt-4 mx-8 opacity-60" />
 
         <!-- Navigation -->
         <nav class="mt-[40px] space-y-4">
@@ -117,14 +125,16 @@
 
             <!-- Profile + Logout -->
             <div class="mt-8 ml-4">
-                <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                    <i class="fas fa-user text-[#BD2727] mr-2"></i> Profil
-                </x-responsive-nav-link>
+                <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-3 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg transition-all duration-200 shadow-md mb-2 font-semibold text-white group">
+                    <i class="fas fa-user text-white mr-3 group-hover:text-yellow-300 transition-colors duration-200"></i>
+                    <span class="group-hover:text-yellow-300 transition-colors duration-200">Profil</span>
+                </a>
                 <form method="POST" action="{{ route('logout') }}" x-data>
                     @csrf
-                    <x-responsive-nav-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                        <i class="fas fa-sign-out-alt text-[#BD2727] mr-2"></i> Déconnexion
-                    </x-responsive-nav-link>
+                    <button type="submit" class="flex items-center w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20 hover:scale-105 hover:shadow-lg transition-all duration-200 shadow-md font-semibold text-white group">
+                        <i class="fas fa-sign-out-alt text-white mr-3 group-hover:text-red-400 transition-colors duration-200"></i>
+                        <span class="group-hover:text-red-400 transition-colors duration-200">Déconnexion</span>
+                    </button>
                 </form>
             </div>
         </nav>

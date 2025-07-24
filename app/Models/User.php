@@ -99,7 +99,13 @@ public function matieres()
     return $this->belongsToMany(\App\Models\Matiere::class)
     ->withPivot('dropped')
     ->withTimestamps();
+}
 
+public function classes()
+{
+    return $this->belongsToMany(\App\Models\Classe::class, 'classe_user')
+    ->withPivot('dropped')
+    ->withTimestamps();
 }
 
 }

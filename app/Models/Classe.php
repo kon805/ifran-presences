@@ -18,12 +18,21 @@ class Classe extends Model
         'annee_academique',
         'semestre',
         'statut',
+        'semestre_termine',
+        'semestre_actuel'
+    ];
+
+    protected $casts = [
+        'semestre_termine' => 'boolean',
     ];
 
     public function etudiants()
     {
-        return $this->belongsToMany(User::class, 'classe_user', 'classe_id', 'user_id');
-    }    public function syncEtudiants($etudiantIds, $forceSemestre2 = false)
+        return $this->belongsToMany(User::class, 'classe_user', 'classe_id', 'user_id')
+            ->withPivot('dropped');
+    }
+
+    public function syncEtudiants($etudiantIds, $forceSemestre2 = false)
     {
         // Empêcher l'ajout direct d'étudiants au semestre 2 sauf lors de la migration
         if ($this->semestre === '2' && !$forceSemestre2) {
@@ -138,4 +147,51 @@ public function terminerSemestre($id)
 
 
 }
+
+public static function creerClasse($data)
+{
+    return DB::transaction(function () use ($data) {
+        // Créer la classe pour le semestre 1
+        $classe = self::create([
+            'nom' => trim($data['nom']),
+            'coordinateur_id' => (int)$data['coordinateur_id'],
+            'annee_academique' => trim($data['annee_academique']),
+            'semestre' => '1',
+            'semestre_actuel' => 1,
+            'semestre_termine' => false,
+            'statut' => 'en_cours'
+        ]);
+
+        // Si des étudiants sont fournis, les assigner
+        if (!empty($data['etudiants'])) {
+            $classe->etudiants()->attach($data['etudiants']);
+        }
+
+        return $classe;
+    });
+}
+
+/**
+     * Synchronise les étudiants avec l'autre semestre de la même année
+     */
+    public function syncEtudiantsWithAutreSemestre($etudiantIds)
+    {
+        $autreSemestre = $this->getAutreSemestreClasse();
+        if ($autreSemestre && $this->semestre === '1') {
+            $autreSemestre->syncEtudiants($etudiantIds, true);
+        }
+    }
+
+    /**
+     * Marque le semestre comme terminé
+     */
+    public function terminer()
+    {
+        return DB::table('classes')
+            ->where('id', $this->id)
+            ->update([
+                'statut' => 'termine',
+                'semestre_termine' => true
+            ]);
+    }
 }

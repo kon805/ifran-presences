@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 
 class PresenceController extends Controller
 {
@@ -86,5 +88,25 @@ class PresenceController extends Controller
             ->paginate(15);
 
         return view('coordinateur.presences.index', compact('cours'));
+    }
+
+    public function show(Cours $cours)
+    {
+        // Charger toutes les relations nécessaires
+        $cours->load([
+            'classe.etudiants',  // Les étudiants de la classe
+            'matiere',           // La matière
+            'professeur',        // Le professeur
+            'presences'          // Les présences existantes
+        ]);
+
+        if (Auth::user()->role === 'coordinateur' &&
+            $cours->classe &&
+            $cours->classe->coordinateur_id !== Auth::id()) {
+            abort(403);
+        }
+
+
+        return view('coordinateur.presences.show', compact('cours'));
     }
 }

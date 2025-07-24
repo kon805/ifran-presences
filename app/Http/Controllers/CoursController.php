@@ -36,6 +36,7 @@ class CoursController extends Controller
 
     public function create()
     {
+        // Temporairement, récupérer toutes les classes jusqu'à ce que la migration soit effectuée
         $classes = Classe::all();
         $professeurs = User::where('role', 'professeur')->get();
         $matieres = \App\Models\Matiere::all();
@@ -117,9 +118,10 @@ class CoursController extends Controller
         return redirect()->route('emploi-du-temps.index')->with('success', 'Cours modifié avec succès.');
     }
 
-    public function destroy(Cours $emploi_du_temps)
+    public function destroy($id)
     {
-        $emploi_du_temps->delete();
-        return redirect()->route('emploi-du-temps.index')->with('success', 'Cours supprimé.');
+        $cours = Cours::findOrFail($id);
+        $cours->delete();
+        return redirect()->route('emploi-du-temps.index')->with('success', 'Cours supprimé avec succès.');
     }
 }
