@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cours;
 use App\Models\Classe;
+use App\Models\Matiere;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,15 +13,42 @@ use Illuminate\Support\Facades\Auth;
 
 class CoursController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
         if ($user->role === 'coordinateur') {
-            $cours = Cours::whereHas('classe', function($q) use ($user) {
+            // Récupérer les données pour les filtres
+            $classes = Classe::where('coordinateur_id', $user->id)->orderBy('nom')->get();
+            $matieres = Matiere::orderBy('nom')->get();
+            $professeurs = User::where('role', 'professeur')->orderBy('name')->get();
+
+            // Construire la requête avec filtres
+            $query = Cours::whereHas('classe', function($q) use ($user) {
                 $q->where('coordinateur_id', $user->id);
-            })->with(['classe', 'professeur', 'matiere', 'types'])->orderBy('date')->get();
-            return view('coordinateur.cours.index', compact('cours'));
+            })->with(['classe', 'professeur', 'matiere', 'types']);
+
+            // Appliquer les filtres
+            if ($request->filled('classe')) {
+                $query->where('classe_id', $request->classe);
+            }
+
+            if ($request->filled('matiere')) {
+                $query->where('matiere_id', $request->matiere);
+            }
+
+            if ($request->filled('professeur')) {
+                $query->where('professeur_id', $request->professeur);
+            }
+
+            if ($request->filled('date')) {
+                $query->whereDate('date', $request->date);
+            }
+
+            // Récupérer les résultats
+            $cours = $query->orderBy('date')->get();
+
+            return view('coordinateur.cours.index', compact('cours', 'classes', 'matieres', 'professeurs'));
         }
 
         if ($user->role === 'professeur') {

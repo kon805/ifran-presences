@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Classe;
 use App\Models\Cours;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,14 +31,28 @@ class EmploiDuTempsController extends Controller
         $previousWeek = $currentMonday->copy()->subWeek()->format('Y-m-d');
         $nextWeek = $currentMonday->copy()->addWeek()->format('Y-m-d');
 
+        // Récupérer toutes les classes dont l'utilisateur est coordinateur
+        $classes = \App\Models\Classe::where('coordinateur_id', $user->id)
+            ->orderBy('nom')
+            ->get();
+
+        $classeId = $request->input('classe_id');
+
         // Récupérer uniquement les cours des classes dont l'utilisateur est coordinateur
-        $cours = Cours::whereBetween('date', [
+        $coursQuery = Cours::whereBetween('date', [
                 $currentMonday->format('Y-m-d'),
                 $endOfWeek->format('Y-m-d')
             ])
             ->whereHas('classe', function($query) use ($user) {
                 $query->where('coordinateur_id', $user->id);
-            })
+            });
+
+        // Appliquer le filtre par classe si spécifié
+        if ($classeId) {
+            $coursQuery->where('classe_id', $classeId);
+        }
+
+        $cours = $coursQuery
             ->with(['matiere', 'professeur', 'classe', 'types'])
             ->orderBy('date')
             ->orderBy('heure_debut')
@@ -51,7 +66,9 @@ class EmploiDuTempsController extends Controller
             'currentMonday' => $currentMonday,
             'endOfWeek' => $endOfWeek,
             'previousWeek' => $previousWeek,
-            'nextWeek' => $nextWeek
+            'nextWeek' => $nextWeek,
+            'classes' => $classes,
+            'classeId' => $classeId
         ]);
     }
 
@@ -60,14 +77,22 @@ class EmploiDuTempsController extends Controller
         $user = \Illuminate\Support\Facades\Auth::user();
         $startDate = Carbon::parse($request->start_date ?? Carbon::now()->startOfWeek());
         $endDate = $startDate->copy()->addDays(6);
+        $classeId = $request->input('classe_id');
 
-        $cours = Cours::whereBetween('date', [
+        $coursQuery = Cours::whereBetween('date', [
                 $startDate->format('Y-m-d'),
                 $endDate->format('Y-m-d')
             ])
             ->whereHas('classe', function($query) use ($user) {
                 $query->where('coordinateur_id', $user->id);
-            })
+            });
+
+        // Appliquer le filtre par classe si spécifié
+        if ($classeId) {
+            $coursQuery->where('classe_id', $classeId);
+        }
+
+        $cours = $coursQuery
             ->with(['matiere', 'professeur', 'classe', 'types'])
             ->orderBy('date')
             ->orderBy('heure_debut')
@@ -76,11 +101,11 @@ class EmploiDuTempsController extends Controller
                 return Carbon::parse($cours->date)->format('Y-m-d');
             });
 
-        $pdf = PDF::loadView('coordinateur.planning.pdf'
-        , [
+        $pdf = PDF::loadView('coordinateur.planning.pdf', [
             'cours' => $cours,
             'startDate' => $startDate,
-            'endDate' => $endDate
+            'endDate' => $endDate,
+            'classeId' => $classeId
         ]);
 
         return $pdf->download('emploi-du-temps-' . $startDate->format('d-m-Y') . '.pdf');

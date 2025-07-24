@@ -30,7 +30,9 @@
                 <select name="classe_id" class="w-full p-3 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-200" required>
                     <option value="">-- Choisir une classe --</option>
                     @foreach($classes as $classe)
-                        <option value="{{ $classe->id }}">{{ $classe->nom }}</option>
+                        <option value="{{ $classe->id }}">{{ $classe->nom }} (Semestre {{ $classe->semestre }})</option>
+
+                        </option>
                     @endforeach
                 </select>
             </div>

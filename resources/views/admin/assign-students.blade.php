@@ -1,5 +1,43 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Style personnalisé pour Select2 pour s'adapter au design de Tailwind */
+        .select2-container .select2-selection--single {
+            height: 42px !important;
+            border-color: #e5e7eb !important;
+            border-radius: 0.5rem !important;
+            padding: 0.375rem 0.75rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px !important;
+            padding-left: 0 !important;
+            color: #1f2937 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #000 !important;
+        }
+        .select2-container--default .select2-selection--multiple {
+            border-color: #e5e7eb !important;
+            border-radius: 0.5rem !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #f3f4f6 !important;
+            border: 1px solid #000 !important;
+            border-radius: 9999px !important;
+            padding: 2px 8px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #000 !important;
+            margin-right: 5px !important;
+        }
+    </style>
+@endpush
+
 @section('content')
 <div class="max-w-7xl mx-auto py-10 px-4">
     <h1 class="text-3xl font-extrabold text-black mb-6 flex items-center">
@@ -28,10 +66,11 @@
                     <label for="parent_id" class="block text-sm font-semibold text-black mb-2">
                         <i class="fa-solid fa-user-tie text-black mr-2"></i> Sélectionner un parent
                     </label>
-                    <select name="parent_id" id="parent_id" class="border rounded-lg w-full px-3 py-2 focus:ring-black focus:border-black" required>
+                    <select name="parent_id" id="parent_id" class="parent-select border rounded-lg w-full px-3 py-2 focus:ring-black focus:border-black" required>
                         <option value="">Choisir un parent...</option>
                         @foreach($parents as $parent)
-                            <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}>
+                            <option value="{{ $parent->id }}" {{ old('parent_id') == $parent->id ? 'selected' : '' }}
+                                data-image="{{ $parent->profile_photo_url }}">
                                 {{ $parent->name }} ({{ $parent->email }})
                             </option>
                         @endforeach
@@ -39,30 +78,20 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-black mb-2">
+                    <label for="student_ids" class="block text-sm font-semibold text-black mb-2">
                         <i class="fa-solid fa-user-graduate text-black mr-2"></i> Sélectionner les étudiants
                     </label>
                     <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                        <div class="grid grid-cols-1 gap-2">
+                        <select name="student_ids[]" id="student_ids" class="students-select w-full" multiple="multiple">
                             @foreach($etudiants as $etudiant)
-                                <div class="flex items-center">
-                                    <input type="checkbox"
-                                           name="student_ids[]"
-                                           value="{{ $etudiant->id }}"
-                                           id="etudiant_{{ $etudiant->id }}"
-                                           {{ (is_array(old('student_ids')) && in_array($etudiant->id, old('student_ids'))) ? 'checked' : '' }}
-                                           class="rounded border-gray-300 text-black shadow-sm focus:border-black focus:ring focus:ring-black/30 focus:ring-opacity-50">
-                                    <label for="etudiant_{{ $etudiant->id }}" class="ml-2 flex items-center cursor-pointer">
-                                        <img src="{{ $etudiant->profile_photo_url }}" alt="{{ $etudiant->name }}"
-                                             class="h-8 w-8 rounded-full border-2 border-black mr-2">
-                                        <div>
-                                            <span class="font-medium text-gray-900">{{ $etudiant->name }}</span>
-                                            <span class="text-sm text-gray-500 ml-2">(Matricule: {{ $etudiant->matricule }})</span>
-                                        </div>
-                                    </label>
-                                </div>
+                                <option value="{{ $etudiant->id }}"
+                                    {{ (is_array(old('student_ids')) && in_array($etudiant->id, old('student_ids'))) ? 'selected' : '' }}
+                                    data-image="{{ $etudiant->profile_photo_url }}"
+                                    data-matricule="{{ $etudiant->matricule }}">
+                                    {{ $etudiant->name }}
+                                </option>
                             @endforeach
-                        </div>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -119,4 +148,72 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialisation du select pour les parents avec format personnalisé
+        $('.parent-select').select2({
+            placeholder: "Choisir un parent...",
+            allowClear: true,
+            templateResult: formatParent,
+            templateSelection: formatParent
+        });
+
+        // Initialisation du select pour les étudiants avec format personnalisé
+        $('.students-select').select2({
+            placeholder: "Rechercher et sélectionner des étudiants...",
+            allowClear: true,
+            templateResult: formatStudent,
+            templateSelection: formatStudentSelection
+        });
+
+        // Fonction pour formater l'affichage des parents dans la liste déroulante
+        function formatParent(parent) {
+            if (!parent.id) {
+                return parent.text;
+            }
+
+            var $parent = $(
+                '<div class="flex items-center">' +
+                    '<img src="' + $(parent.element).data('image') + '" class="h-8 w-8 rounded-full mr-3 border border-gray-300" />' +
+                    '<div>' + parent.text + '</div>' +
+                '</div>'
+            );
+
+            return $parent;
+        };
+
+        // Fonction pour formater l'affichage des étudiants dans la liste déroulante
+        function formatStudent(student) {
+            if (!student.id) {
+                return student.text;
+            }
+
+            var $student = $(
+                '<div class="flex items-center py-1">' +
+                    '<img src="' + $(student.element).data('image') + '" class="h-8 w-8 rounded-full mr-3 border-2 border-black" />' +
+                    '<div>' +
+                        '<div class="font-medium">' + student.text + '</div>' +
+                        '<div class="text-xs text-gray-500">Matricule: ' + $(student.element).data('matricule') + '</div>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            return $student;
+        };
+
+        // Fonction pour formater l'affichage des étudiants sélectionnés
+        function formatStudentSelection(student) {
+            if (!student.id) {
+                return student.text;
+            }
+            return student.text + ' (Matricule: ' + $(student.element).data('matricule') + ')';
+        };
+    });
+</script>
+@endpush
+
 @endsection

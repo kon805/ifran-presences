@@ -21,7 +21,7 @@
         ['route' => 'coordinateur.classes.index', 'icon' => 'fa-school', 'text' => 'Liste des classes', 'code_couleur' => '#BD2727'],
         ['route' => 'emploi-du-temps.index', 'icon' => 'fa-calendar-alt', 'text' => 'Emploi du temps', 'code_couleur' => '#BD2727'],
         ['route' => 'coordinateur.presences.index', 'icon' => 'fa-user-check', 'text' => 'Présences', 'code_couleur' => '#BD2727'],
-        ['route' => 'coordinateur.justifications.index', 'icon' => 'fa-clipboard-check', 'text' => 'Justifications', 'code_couleur' => '#BD2727'],
+        ['route' => 'coordinateur.justifications.index', 'icon' => 'fa-clipboard-check', 'text' => 'Absences', 'code_couleur' => '#BD2727'],
         ['route' => 'coordinateur.justifications.history', 'icon' => 'fa-history', 'text' => 'Historique des justifications', 'code_couleur' => '#BD2727'],
         ['route' => 'coordinateur.planing.index', 'icon' => 'fa-calendar-alt', 'text' => 'Planning hebdomadaire', 'code_couleur' => '#BD2727'],
     ]
@@ -140,7 +140,7 @@
         </nav>
         <!-- Footer (optionnel) -->
         <div class="absolute bottom-4 left-0 w-full text-center text-xs text-white opacity-60">
-            &copy; {{ date('Y') }} - Mon Application
+            &copy; {{ date('Y') }} - Mon Dashboard Ifran
         </div>
     </aside>
 </div>

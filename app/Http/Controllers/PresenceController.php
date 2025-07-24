@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Cours;
 use App\Models\Presence;
 use App\Models\User;
+use App\Models\Classe;
+use App\Models\Matiere;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -75,19 +77,40 @@ class PresenceController extends Controller
         return redirect()->route('presences.index')->with('success', 'Présences enregistrées.');
     }
 
-    public function indexCoordinateur()
+    public function indexCoordinateur(Request $request)
     {
         $user = \Illuminate\Support\Facades\Auth::user();
 
-        $cours = Cours::query()
+        // Récupérer les classes et matières pour les filtres
+        $classes = Classe::where('coordinateur_id', $user->id)->get();
+        $matieres = Matiere::orderBy('nom')->get();
+
+        // Construire la requête avec filtres
+        $query = Cours::query()
             ->whereHas('classe', function($query) use ($user) {
                 $query->where('coordinateur_id', $user->id);
             })
-            ->with(['classe', 'matiere', 'professeur', 'types', 'presences'])
-            ->orderBy('date', 'desc')
-            ->paginate(15);
+            ->with(['classe', 'matiere', 'professeur', 'types', 'presences']);
 
-        return view('coordinateur.presences.index', compact('cours'));
+        // Appliquer les filtres
+        if ($request->filled('classe')) {
+            $query->where('classe_id', $request->classe);
+        }
+
+        if ($request->filled('matiere')) {
+            $query->where('matiere_id', $request->matiere);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('date', $request->date);
+        }
+
+        // Trier et paginer les résultats
+        $cours = $query->orderBy('date', 'desc')
+            ->paginate(15)
+            ->withQueryString(); // Conserver les paramètres de filtre dans la pagination
+
+        return view('coordinateur.presences.index', compact('cours', 'classes', 'matieres'));
     }
 
     public function show(Cours $cours)

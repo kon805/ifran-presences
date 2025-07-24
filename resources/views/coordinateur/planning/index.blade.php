@@ -12,9 +12,10 @@
                     </span>
                 </h2>
                 <div class="flex space-x-3">
-                    <a href="{{ route('coordinateur.planning.export'
-                    ,
-                     ['start_date' => $currentMonday->format('Y-m-d')]) }}"
+                    <a href="{{ route('coordinateur.planning.export', [
+                        'start_date' => $currentMonday->format('Y-m-d'),
+                        'classe_id' => $classeId
+                    ]) }}"
                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
                         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -25,7 +26,7 @@
             </div>
 
             <div class="flex justify-between items-center bg-gray-50 px-4 py-3 rounded-lg shadow-sm">
-                <a href="{{ route('coordinateur.planing.index', ['week' => $previousWeek]) }}"
+                <a href="{{ route('coordinateur.planing.index', ['week' => $previousWeek, 'classe_id' => $classeId]) }}"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -33,18 +34,55 @@
                     Semaine précédente
                 </a>
 
-                <div class="text-sm text-gray-700">
-                    <i class="fa-solid fa-calendar-week mr-2 text-indigo-500"></i>
-                    Vos classes cette semaine : {{ $cours->pluck('classe.nom')->unique()->implode(', ') }}
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-700">
+                        <i class="fa-solid fa-calendar-week mr-2 text-indigo-500"></i>
+                        {{ $cours->count() > 0 ? 'Classes affichées : ' . $cours->pluck('classe.nom')->unique()->implode(', ') : 'Aucune classe affichée' }}
+                    </div>
                 </div>
 
-                <a href="{{ route('coordinateur.planing.index', ['week' => $nextWeek]) }}"
+                <a href="{{ route('coordinateur.planing.index', ['week' => $nextWeek, 'classe_id' => $classeId]) }}"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Semaine suivante
                     <svg class="ml-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </a>
+            </div>
+
+            <!-- Filtres -->
+            <div class="bg-white px-4 py-5 border-b border-gray-200 sm:px-6 rounded-lg shadow-sm mb-4">
+                <form action="{{ route('coordinateur.planing.index') }}" method="GET" class="space-y-4">
+                    <input type="hidden" name="week" value="{{ request('week', $currentMonday->format('Y-m-d')) }}">
+
+                    <div class="flex flex-wrap items-end space-x-4">
+                        <div class="w-full sm:w-auto">
+                            <label for="classe_id" class="block text-sm font-medium text-gray-700">Classe</label>
+                            <select id="classe_id" name="classe_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">Toutes les classes</option>
+                                @foreach($classes as $classe)
+                                    <option value="{{ $classe->id }}" {{ $classeId == $classe->id ? 'selected' : '' }}>{{ $classe->nom }} (Semestre {{ $classe->semestre }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="w-full sm:w-auto">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Filtrer
+                            </button>
+
+                            <a href="{{ route('coordinateur.planing.index', ['week' => request('week', $currentMonday->format('Y-m-d'))]) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-2">
+                                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Réinitialiser
+                            </a>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 

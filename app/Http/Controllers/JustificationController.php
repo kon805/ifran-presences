@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Presence;
 use App\Models\Justification;
+use App\Models\User;
+use App\Models\Classe;
 use App\Services\LoggingService;
 use App\Notifications\StatusChangeNotification;
 use Illuminate\Http\Request;
@@ -48,20 +50,46 @@ class JustificationController extends Controller
 
         return view('coordinateur.justifications.history', compact('justifications'));
     }
-    public function index()
+    public function index(Request $request)
     {
-        $absences = Presence::whereIn('statut', ['absent', 'retard'])
+        // Récupérer les données pour les filtres
+        $etudiants = User::where('role', 'etudiant')
+            ->whereHas('presences', function($query) {
+                $query->whereIn('statut', ['absent', 'retard'])
+                      ->whereDoesntHave('justification');
+            })
+            ->orderBy('name')
+            ->get();
+
+        $classes = Classe::where('coordinateur_id', Auth::id())
+            ->orderBy('nom')
+            ->get();
+
+        // Construire la requête avec filtres
+        $query = Presence::whereIn('statut', ['absent', 'retard'])
             ->whereDoesntHave('justification')
             ->whereHas('cours', function ($query) {
                 $query->whereHas('classe', function ($q) {
                     $q->where('coordinateur_id', Auth::id());
                 });
             })
-            ->with(['etudiant', 'cours.classe', 'cours.matiere', 'justification'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->with(['etudiant', 'cours.classe', 'cours.matiere', 'justification']);
 
-        return view('coordinateur.justifications.index', compact('absences'));
+        // Appliquer les filtres
+        if ($request->filled('etudiant')) {
+            $query->where('etudiant_id', $request->etudiant);
+        }
+
+        if ($request->filled('classe')) {
+            $query->whereHas('cours', function ($q) use ($request) {
+                $q->where('classe_id', $request->classe);
+            });
+        }
+
+        // Trier et récupérer les résultats
+        $absences = $query->orderBy('created_at', 'desc')->get();
+
+        return view('coordinateur.justifications.index', compact('absences', 'etudiants', 'classes'));
     }
 
     public function create($presence_id)

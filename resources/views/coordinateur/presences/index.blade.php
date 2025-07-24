@@ -1,11 +1,53 @@
 @extends('layouts.app')
 @section('content')
 <div class="max-w-6xl mx-auto py-8 px-3">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-4">
         <h2 class="text-3xl font-extrabold text-red-700 flex items-center">
             <i class="fa-solid fa-list-check text-red-500 mr-3 text-2xl"></i>
             Gestion des présences
         </h2>
+    </div>
+
+    <!-- Filtres -->
+    <div class="bg-white p-4 rounded-xl shadow mb-6 border border-red-100">
+        <form method="GET" action="{{ route('coordinateur.presences.index') }}" class="grid md:grid-cols-4 gap-4">
+            <div>
+                <label for="classe" class="block text-sm font-medium text-red-700 mb-1">Classe</label>
+                <select id="classe" name="classe" class="w-full rounded-md border-red-200 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
+                    <option value="">Toutes les classes</option>
+                    @foreach($classes ?? [] as $classeOption)
+                        <option value="{{ $classeOption->id }}" {{ request('classe') == $classeOption->id ? 'selected' : '' }}>
+                            {{ $classeOption->nom }} (S{{ $classeOption->semestre }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="matiere" class="block text-sm font-medium text-red-700 mb-1">Matière</label>
+                <select id="matiere" name="matiere" class="w-full rounded-md border-red-200 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
+                    <option value="">Toutes les matières</option>
+                    @foreach($matieres ?? [] as $matiereOption)
+                        <option value="{{ $matiereOption->id }}" {{ request('matiere') == $matiereOption->id ? 'selected' : '' }}>
+                            {{ $matiereOption->nom }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="date" class="block text-sm font-medium text-red-700 mb-1">Date</label>
+                <input type="date" id="date" name="date" value="{{ request('date') }}" class="w-full rounded-md border-red-200 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition font-medium flex items-center">
+                    <i class="fas fa-filter mr-2"></i> Filtrer
+                </button>
+                @if(request()->has('classe') || request()->has('matiere') || request()->has('date'))
+                    <a href="{{ route('coordinateur.presences.index') }}" class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition font-medium">
+                        <i class="fas fa-times"></i>
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
 
     <div class="bg-gradient-to-br from-red-50 to-white rounded-2xl shadow-lg overflow-x-auto border border-gray-100">
