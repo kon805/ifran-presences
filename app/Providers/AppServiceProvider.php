@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
         // Enregistrer l'observer pour les présences
         Presence::observe(PresenceObserver::class);
 
+        // Enregistrer les politiques manuellement
+        \Illuminate\Support\Facades\Gate::define('view', [\App\Policies\EtudiantPolicy::class, 'view']);
+
         // Utiliser Tailwind CSS pour la pagination
         Paginator::useBootstrapFive();
         Route::middleware('web')

@@ -18,7 +18,6 @@
 
         <!-- Styles -->
         @livewireStyles
-        @stack('styles')
     </head>
 
 <body class="bg-gray-50">
@@ -38,7 +37,6 @@
        @stack('modals')
 
         @livewireScripts
-        @stack('scripts')
 
 </body>
 

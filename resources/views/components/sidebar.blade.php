@@ -53,7 +53,8 @@
     'title' => 'Tableau de bord<br />Parent',
     'links' => [
         ['route' => 'parent.dashboard', 'icon' => 'fa-user-friends', 'text' => 'Dashboard Parent', 'code_couleur' => '#00BFFF'],
-        ['route' => 'parent.presences.index', 'icon' => 'fa-calendar-check', 'text' => 'Présences', 'code_couleur' => '#00BFFF'],
+        // Utilisez un ID spécial pour le lien des présences afin de pouvoir l'identifier avec JavaScript
+        ['route' => 'parent.presences.index', 'icon' => 'fa-calendar-check', 'text' => 'Présences', 'code_couleur' => '#00BFFF', 'id' => 'parent-presences-link', 'has_children' => true],
     ]
 ],
 
@@ -115,12 +116,81 @@
         <!-- Navigation -->
         <nav class="mt-[40px] space-y-4">
             @foreach($current['links'] as $link)
-                <a href="{{ route($link['route']) }}" class="flex items-center bg-white bg-opacity-10 rounded-xl shadow-md h-[55px] mx-4 hover:scale-[1.07] hover:bg-opacity-20 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white" aria-label="{{ $link['text'] }}">
-                    <div class="w-[36px] h-[36px] bg-white rounded-lg flex items-center justify-center ml-3 shadow">
-                        <i class="fas {{ $link['icon'] }}  text-[22px]" style="color: {{ $link['code_couleur'] }};"  ></i>
+                @if(isset($link['has_children']) && $link['has_children'] && $role === 'parent')
+                    <div x-data="{ open: false }" @mouseleave="open = false" class="relative">
+                        <a href="{{ route($link['route']) }}"
+                           @mouseenter="open = true"
+                           id="{{ $link['id'] ?? '' }}"
+                           class="flex items-center justify-between bg-white bg-opacity-10 rounded-xl shadow-md h-[55px] mx-4 hover:scale-[1.07] hover:bg-opacity-20 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white"
+                           aria-label="{{ $link['text'] }}">
+                            <div class="flex items-center">
+                                <div class="w-[36px] h-[36px] bg-white rounded-lg flex items-center justify-center ml-3 shadow">
+                                    <i class="fas {{ $link['icon'] }} text-[22px]" style="color: {{ $link['code_couleur'] }};"></i>
+                                </div>
+                                <span class="text-white font-bold text-[19px] ml-5">{{ $link['text'] }}</span>
+                            </div>
+                            <div class="mr-4">
+                                <i class="fas fa-chevron-right text-white transition-transform" :class="{'rotate-90': open}"></i>
+                            </div>
+                        </a>
+
+                        <!-- Sous-menu avec les étudiants assignés au parent -->
+                        <div x-show="open"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="absolute z-50 left-4 right-4 mt-2 py-2 bg-white/20 backdrop-blur-md rounded-xl shadow-xl"
+                             id="parent-students-menu"
+                             style="display: none;">
+                            <!-- Chargement direct des étudiants -->
+                            <div class="py-1">
+                                @if(Auth::user()->role === 'parent')
+                                    @php
+                                        $etudiants = \App\Models\User::whereHas('parents', function($query) {
+                                            $query->where('user_id', Auth::id());
+                                        })
+                                        ->where('role', 'etudiant')
+                                        ->get();
+                                    @endphp
+
+                                    @if($etudiants->count() > 0)
+                                        @foreach($etudiants as $etudiant)
+                                            <a href="{{ route('parent.presences.etudiant', ['etudiant' => $etudiant->id]) }}" class="flex items-center px-4 py-2 hover:bg-white/20 transition-colors duration-200">
+                                                <img src="{{ $etudiant->profile_photo_url }}" class="w-7 h-7 rounded-full mr-2 border border-white" alt="{{ $etudiant->name }}">
+                                                <div>
+                                                    <div class="text-white text-sm font-medium">{{ $etudiant->name }}</div>
+                                                    @if($etudiant->matricule)
+                                                        <div class="text-white/80 text-xs">Matricule: {{ $etudiant->matricule }}</div>
+                                                    @endif
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                    @else
+                                        <div class="px-4 py-3 text-center text-white text-sm">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            Aucun étudiant assigné
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="px-4 py-3 text-center text-white text-sm">
+                                        <i class="fas fa-exclamation-circle mr-2"></i>
+                                        Accès non autorisé
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
-                    <span class="text-white font-bold text-[19px] ml-5">{{ $link['text'] }}</span>
-                </a>
+                @else
+                    <a href="{{ route($link['route']) }}" class="flex items-center bg-white bg-opacity-10 rounded-xl shadow-md h-[55px] mx-4 hover:scale-[1.07] hover:bg-opacity-20 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white" aria-label="{{ $link['text'] }}">
+                        <div class="w-[36px] h-[36px] bg-white rounded-lg flex items-center justify-center ml-3 shadow">
+                            <i class="fas {{ $link['icon'] }} text-[22px]" style="color: {{ $link['code_couleur'] }};"></i>
+                        </div>
+                        <span class="text-white font-bold text-[19px] ml-5">{{ $link['text'] }}</span>
+                    </a>
+                @endif
             @endforeach
 
             <!-- Profile + Logout -->
