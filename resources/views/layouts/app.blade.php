@@ -24,6 +24,11 @@
     {{-- Sidebar --}}
     @include('components.sidebar')
 
+    <!-- Cloche de notification -->
+    <div class="fixed top-4 right-4 z-50">
+        <x-notification-bell />
+    </div>
+
     {{-- Main content --}}
     <div
         x-data="{ open: window.innerWidth >= 768 }"

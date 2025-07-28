@@ -36,15 +36,37 @@ class AssignStudentsController extends Controller
         try {
             DB::beginTransaction();
 
+            // Log des données pour déboguer
+            Log::info('Données d\'assignation:', [
+                'parent_id' => $request->parent_id,
+                'student_ids' => $request->student_ids
+            ]);
+
+            // Vérifier que le parent est bien un parent
+            $parent = User::findOrFail($request->parent_id);
+            if ($parent->role !== 'parent') {
+                return redirect()
+                    ->route('admin.users.assign-students')
+                    ->with('error', 'L\'utilisateur sélectionné n\'est pas un parent.');
+            }
+
             // Delete existing assignments for these students
-            ParentStudent::whereIn('etudiant_id', $request->student_ids)->delete();
+            // Nous ne supprimons pas les assignations existantes pour éviter de supprimer d'autres relations parent-étudiant
+            ParentStudent::where('user_id', $request->parent_id)->delete();
 
             // Create new assignments
             foreach ($request->student_ids as $studentId) {
-                ParentStudent::create([
-                    'user_id' => $request->parent_id,
-                    'etudiant_id' => $studentId
-                ]);
+                // Vérifier que l'étudiant n'est pas déjà assigné à ce parent
+                $existingAssignment = ParentStudent::where('user_id', $request->parent_id)
+                    ->where('etudiant_id', $studentId)
+                    ->first();
+                
+                if (!$existingAssignment) {
+                    ParentStudent::create([
+                        'user_id' => $request->parent_id,
+                        'etudiant_id' => $studentId
+                    ]);
+                }
             }
 
             DB::commit();
@@ -70,13 +92,35 @@ class AssignStudentsController extends Controller
         ]);
 
         try {
-            ParentStudent::where('user_id', $request->parent_id)
+            // Log des données pour déboguer
+            Log::info('Données de désassignation:', [
+                'parent_id' => $request->parent_id,
+                'student_id' => $request->student_id
+            ]);
+
+            $deleted = ParentStudent::where('user_id', $request->parent_id)
                 ->where('etudiant_id', $request->student_id)
                 ->delete();
 
-            return response()->json(['success' => true]);
+            Log::info('Résultat de suppression:', ['deleted' => $deleted]);
+
+            if ($request->ajax()) {
+                return response()->json(['success' => true]);
+            } else {
+                return redirect()
+                    ->route('admin.users.assign-students')
+                    ->with('success', 'L\'étudiant a été désassigné du parent avec succès.');
+            }
         } catch (\Exception $e) {
-            return response()->json(['success' => false], 500);
+            Log::error('Erreur de désassignation: ' . $e->getMessage());
+            
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            } else {
+                return redirect()
+                    ->route('admin.users.assign-students')
+                    ->with('error', 'Une erreur est survenue: ' . $e->getMessage());
+            }
         }
     }
 }

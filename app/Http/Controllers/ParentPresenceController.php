@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\NotificationTrait;
 use App\Models\User;
 use App\Models\Presence;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
  */
 class ParentPresenceController extends Controller
 {
+    use NotificationTrait;
     /**
      * Affiche le tableau de bord parent avec les statistiques de ses enfants
      */    public function dashboard()
@@ -230,23 +232,25 @@ class ParentPresenceController extends Controller
             // Analyser les présences par semaine
             $presencesParSemaine = [];
             if ($enfant->presences->count() > 0) {
-                $presencesParSemaine = $enfant->presences
-                    ->groupBy(function($presence) {
-                        return Carbon::parse($presence->cours->date)->startOfWeek()->format('Y-m-d');
-                    })
-                    ->map(function($presencesSemaine) {
-                        $total = $presencesSemaine->count();
-                        $absents = $presencesSemaine->filter(function($presence) {
-                            return $presence->statut === 'absent';
-                        })->count();
-                        $presents = $presencesSemaine->filter(function($presence) {
-                            return $presence->statut === 'présent' || $presence->statut === 'retard';
-                        })->count();
-
+                $presencesParSemaine = DB::table('presences')
+                    ->join('cours', 'presences.cours_id', '=', 'cours.id')
+                    ->where('presences.etudiant_id', $enfant->id)
+                    ->where('cours.date', '>=', Carbon::now()->subMonths(3))
+                    ->select(
+                        DB::raw('DATE_FORMAT(cours.date, "%Y-%m-%d") as semaine'),
+                        DB::raw('COUNT(*) as total'),
+                        DB::raw('SUM(CASE WHEN presences.statut IN ("présent", "retard") THEN 1 ELSE 0 END) as presents')
+                    )
+                    ->groupBy('semaine')
+                    ->orderBy('semaine', 'desc')
+                    ->get()
+                    ->mapWithKeys(function($stats) {
                         return [
-                            'total' => $total,
-                            'presents' => $presents,
-                            'taux' => $total > 0 ? round(($presents / $total) * 100, 2) : 0
+                            $stats->semaine => [
+                                'total' => $stats->total,
+                                'presents' => $stats->presents,
+                                'taux' => $stats->total > 0 ? round(($stats->presents / $stats->total) * 100, 2) : 0
+                            ]
                         ];
                     });
             }
@@ -254,40 +258,31 @@ class ParentPresenceController extends Controller
             // Analyser les présences par matière
             $presencesParMatiere = [];
             if ($enfant->presences->count() > 0) {
-                $presencesParMatiere = $enfant->presences
-                    ->groupBy(function($presence) {
-                        return $presence->cours->matiere_id ?? 0;
-                    })
-                    ->map(function($presencesMatiere) {
-                        if ($presencesMatiere->isEmpty() || !$presencesMatiere->first()->cours || !$presencesMatiere->first()->cours->matiere) {
-                            return [
-                                'nom' => 'Matière inconnue',
-                                'total' => 0,
-                                'presents' => 0,
-                                'absents' => 0,
-                                'taux' => 0,
-                                'couleur' => 'bg-gray-500'
-                            ];
-                        }
-
-                        $matiere = $presencesMatiere->first()->cours->matiere;
-                        $total = $presencesMatiere->count();
-                        $absents = $presencesMatiere->filter(function($presence) {
-                            return $presence->statut === 'absent';
-                        })->count();
-                        $presents = $presencesMatiere->filter(function($presence) {
-                            return $presence->statut === 'présent' || $presence->statut === 'retard';
-                        })->count();
-
-                        $taux = $total > 0 ? round(($presents / $total) * 100, 2) : 0;
-
+                $presencesParMatiere = DB::table('presences')
+                    ->join('cours', 'presences.cours_id', '=', 'cours.id')
+                    ->join('matieres', 'cours.matiere_id', '=', 'matieres.id')
+                    ->where('presences.etudiant_id', $enfant->id)
+                    ->where('cours.date', '>=', Carbon::now()->subMonths(3))
+                    ->select(
+                        'matieres.id',
+                        'matieres.nom',
+                        DB::raw('COUNT(*) as total'),
+                        DB::raw('SUM(CASE WHEN presences.statut = "absent" THEN 1 ELSE 0 END) as absents'),
+                        DB::raw('SUM(CASE WHEN presences.statut IN ("présent", "retard") THEN 1 ELSE 0 END) as presents')
+                    )
+                    ->groupBy('matieres.id', 'matieres.nom')
+                    ->get()
+                    ->mapWithKeys(function($stats) {
+                        $taux = $stats->total > 0 ? round(($stats->presents / $stats->total) * 100, 2) : 0;
                         return [
-                            'nom' => $matiere->nom,
-                            'total' => $total,
-                            'presents' => $presents,
-                            'absents' => $absents,
-                            'taux' => $taux,
-                            'couleur' => $this->getColorForAttendanceRate($taux)
+                            $stats->id => [
+                                'nom' => $stats->nom,
+                                'total' => $stats->total,
+                                'presents' => $stats->presents,
+                                'absents' => $stats->absents,
+                                'taux' => $taux,
+                                'couleur' => $this->getColorForAttendanceRate($taux)
+                            ]
                         ];
                     });
             }

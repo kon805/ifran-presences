@@ -37,30 +37,7 @@
 
         <!-- Statistiques d'absences -->
         <div class="p-6 bg-gray-50 border-t border-gray-200">
-            <!-- Statistiques globales -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div class="bg-red-50 rounded-lg p-4 border border-red-200 shadow">
-                    <h4 class="text-sm font-semibold text-red-800 mb-2 flex items-center">
-                        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-                        Absences non justifiées
-                    </h4>
-                    <p class="text-2xl font-bold text-red-600">{{ $absencesNonJustifiees }}</p>
-                </div>
-                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200 shadow">
-                    <h4 class="text-sm font-semibold text-yellow-800 mb-2 flex items-center">
-                        <i class="fa-solid fa-file-circle-check mr-2"></i>
-                        Absences justifiées
-                    </h4>
-                    <p class="text-2xl font-bold text-yellow-600">{{ $absencesJustifiees }}</p>
-                </div>
-                <div class="bg-green-50 rounded-lg p-4 border border-green-200 shadow">
-                    <h4 class="text-sm font-semibold text-green-800 mb-2 flex items-center">
-                        <i class="fa-solid fa-chart-line mr-2"></i>
-                        Taux de présence global
-                    </h4>
-                    <p class="text-2xl font-bold text-green-600">{{ $tauxPresenceGlobal }}%</p>
-                </div>
-            </div>
+  
 
             <!-- Taux de présence par matière -->
             <div class="bg-white rounded-lg p-5 border border-gray-200 shadow mb-8">

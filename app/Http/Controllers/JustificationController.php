@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\NotificationTrait;
 use App\Models\Presence;
 use App\Models\Justification;
 use App\Models\User;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class JustificationController extends Controller
 {
+    use NotificationTrait;
     public function history(Request $request)
     {
         $query = Justification::with(['presence.etudiant', 'presence.cours.matiere', 'coordinateur']);

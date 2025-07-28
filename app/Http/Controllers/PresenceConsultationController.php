@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
-
+use App\Traits\NotificationTrait;
 use App\Models\Cours;
 use Illuminate\Http\Request;
 use App\Models\Presence;
@@ -11,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class PresenceConsultationController extends Controller
 {
+    use NotificationTrait;
     public function index()
     {
         $cours = Cours::with(['classe', 'professeur', 'types', 'matiere'])
