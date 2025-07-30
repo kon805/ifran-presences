@@ -2,8 +2,9 @@
 
 namespace App\Traits;
 
-use App\Models\Notification;
 use App\Models\User;
+use App\Notifications\AbsenceNotification;
+use App\Notifications\EtudiantDroppedMatiere;
 
 trait NotificationTrait
 {
@@ -15,33 +16,15 @@ trait NotificationTrait
         })->get();
 
         foreach ($parents as $parent) {
-            Notification::create([
-                'type' => 'absence',
-                'etudiant_id' => $etudiant->id,
-                'destinataire_id' => $parent->id,
-                'message' => "{$etudiant->name} était absent au cours de {$cours->matiere->nom}",
-                'details' => [
-                    'cours_id' => $cours->id,
-                    'date' => $cours->date,
-                    'matiere' => $cours->matiere->nom,
-                ]
-            ]);
+            if ($parent) {
+                $parent->notify(new AbsenceNotification($etudiant, $cours));
+            }
         }
 
         // Notifier le coordinateur
         $coordinateur = User::where('role', 'coordinateur')->first();
         if ($coordinateur) {
-            Notification::create([
-                'type' => 'absence',
-                'etudiant_id' => $etudiant->id,
-                'destinataire_id' => $coordinateur->id,
-                'message' => "{$etudiant->name} était absent au cours de {$cours->matiere->nom}",
-                'details' => [
-                    'cours_id' => $cours->id,
-                    'date' => $cours->date,
-                    'matiere' => $cours->matiere->nom,
-                ]
-            ]);
+            $coordinateur->notify(new AbsenceNotification($etudiant, $cours));
         }
     }
 
@@ -53,31 +36,15 @@ trait NotificationTrait
         })->get();
 
         foreach ($parents as $parent) {
-            Notification::create([
-                'type' => 'dropped',
-                'etudiant_id' => $etudiant->id,
-                'destinataire_id' => $parent->id,
-                'message' => "{$etudiant->name} a été dropped du cours de {$matiere->nom}",
-                'details' => [
-                    'matiere_id' => $matiere->id,
-                    'matiere_nom' => $matiere->nom,
-                ]
-            ]);
+            if ($parent) {
+                $parent->notify(new EtudiantDroppedMatiere($etudiant, $matiere));
+            }
         }
 
         // Notifier le coordinateur
         $coordinateur = User::where('role', 'coordinateur')->first();
         if ($coordinateur) {
-            Notification::create([
-                'type' => 'dropped',
-                'etudiant_id' => $etudiant->id,
-                'destinataire_id' => $coordinateur->id,
-                'message' => "{$etudiant->name} a été dropped du cours de {$matiere->nom}",
-                'details' => [
-                    'matiere_id' => $matiere->id,
-                    'matiere_nom' => $matiere->nom,
-                ]
-            ]);
+            $coordinateur->notify(new EtudiantDroppedMatiere($etudiant, $matiere));
         }
     }
 }

@@ -8,8 +8,10 @@ use App\Models\Matiere;
 use App\Models\Cours;
 use App\Models\TypeCours;
 use App\Models\Presence;
+use App\Models\AnneeAcademique;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -41,7 +43,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password')
         ]);
 
-        // Création des coordinateurs avec mot de passe explicite
+        // Création des 3 coordinateurs avec mot de passe explicite
         $coordinateurs = collect();
         for ($i = 1; $i <= 3; $i++) {
             $coordinateurs->push(
@@ -52,7 +54,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Création des professeurs avec mot de passe explicite
+        // Création des 5 professeurs avec mot de passe explicite
         $professeurs = collect();
         for ($i = 1; $i <= 5; $i++) {
             $professeurs->push(
@@ -63,54 +65,102 @@ class DatabaseSeeder extends Seeder
             );
         }
 
+        // Création des années académiques
+        $anneesAcademiques = collect();
+
+        // Année académique en cours (2024-2025)
+        $anneesAcademiques->push(
+            AnneeAcademique::create([
+                'annee' => '2024-2025',
+                'date_debut' => Carbon::create(2024, 9, 1),
+                'date_fin' => Carbon::create(2025, 7, 31),
+                'statut' => 'en_cours'
+            ])
+        );
+
+        // Année académique terminée (2023-2024)
+        $anneesAcademiques->push(
+            AnneeAcademique::create([
+                'annee' => '2023-2024',
+                'date_debut' => Carbon::create(2023, 9, 1),
+                'date_fin' => Carbon::create(2024, 7, 31),
+                'statut' => 'terminee'
+            ])
+        );
+
         // Création des classes avec coordinateurs
         $classes = collect();
-        $annees = ['2023-2024', '2024-2025'];
+        $filieres = ['Informatique', 'Commerce', 'Marketing'];
+        $niveaux = ['1ère année', '2ème année', 'Master 1'];
+
         foreach ($coordinateurs as $coordinateur) {
-            foreach ($annees as $annee) {
+            foreach ($anneesAcademiques as $anneeAcad) {
                 // Créer une classe pour chaque semestre
                 for ($semestre = 1; $semestre <= 2; $semestre++) {
+                    $filiere = $filieres[array_rand($filieres)];
+                    $niveau = $niveaux[array_rand($niveaux)];
                     $classes->push(
                         Classe::factory()
                             ->create([
                                 'coordinateur_id' => $coordinateur->id,
-                                'annee_academique' => $annee,
+                                'annee_academique_id' => $anneeAcad->id,
                                 'semestre' => (string)$semestre,
-                                'nom' => "Classe {$annee} S{$semestre}"
+                                'nom' => "{$niveau} {$filiere} S{$semestre}",
+                                'statut' => $anneeAcad->statut === 'terminee' ? 'terminee' : 'en_cours'
                             ])
                     );
                 }
             }
         }
 
-        // Création des étudiants et affectation aux classes
-        foreach ($classes as $classe) {
-            $etudiants = collect();
-            for ($i = 1; $i <= 15; $i++) {
-                $etudiants->push(
-                    User::factory()->etudiant()->create([
-                        'password' => Hash::make('password123'),
-                        'email' => "etudiant" . ((($classe->id - 1) * 15) + $i) . "@example.com"
-                    ])
-                );
-            }
-            $classe->etudiants()->attach($etudiants->pluck('id'));
+        // Création des 20 étudiants et affectation aux classes de manière équilibrée
+        $totalEtudiants = collect();
+        for ($i = 1; $i <= 20; $i++) {
+            $totalEtudiants->push(
+                User::factory()->etudiant()->create([
+                    'password' => Hash::make('password123'),
+                    'email' => "etudiant{$i}@example.com"
+                ])
+            );
+        }
 
-            // Création de parents pour certains étudiants
-            foreach ($etudiants as $etudiant) {
-                if (rand(0, 1)) {
-                    static $parentCount = 0;
-                    $parentCount++;
-                    $parent = User::factory()->parent()->create([
-                        'password' => Hash::make('password123'),
-                        'email' => "parent{$parentCount}@example.com"
-                    ]);
-                    \App\Models\Parents::create([
-                        'user_id' => $parent->id,
-                        'etudiant_id' => $etudiant->id
-                    ]);
+        // Distribution des étudiants dans les classes en respectant la contrainte de semestre
+        // Répartir les étudiants équitablement entre les années académiques
+        $etudiantsParAnnee = $totalEtudiants->split(2); // Divise en 2 groupes de 10
+
+        foreach ($anneesAcademiques as $index => $anneeAcad) {
+            if (!isset($etudiantsParAnnee[$index])) continue;
+
+            $etudiantsAnnee = $etudiantsParAnnee[$index];
+            $classesAnnee = $classes->where('annee_academique_id', $anneeAcad->id);
+
+            // Pour chaque semestre
+            foreach (['1', '2'] as $semestre) {
+                $classesSemestre = $classesAnnee->where('semestre', $semestre);
+                $etudiantsDisponibles = $etudiantsAnnee->values(); // Reset les index
+
+                foreach ($classesSemestre as $classe) {
+                    // Prendre les 5 premiers étudiants disponibles pour cette classe
+                    $etudiantsClasse = $etudiantsDisponibles->take(5);
+                    if ($etudiantsClasse->isNotEmpty()) {
+                        $classe->etudiants()->attach($etudiantsClasse->pluck('id'));
+                        // Retirer ces étudiants de la liste des disponibles pour ce semestre
+                        $etudiantsDisponibles = $etudiantsDisponibles->slice(5);
+                    }
                 }
             }
+        }        // Création des parents (10 au total) et association avec les étudiants
+        static $totalParents = 0;
+        for ($i = 1; $i <= 10; $i++) {
+            $etudiant = $totalEtudiants->get(($i - 1) * 2); // Prend un étudiant sur deux
+            $parent = User::factory()->parent()->create([
+                'password' => Hash::make('password123'),
+                'email' => "parent{$i}@example.com"
+            ]);
+            \App\Models\Parents::create([
+                'user_id' => $parent->id,
+                'etudiant_id' => $etudiant->id
+            ]);
         }
 
         // Création des matières et attribution aux professeurs

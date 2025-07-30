@@ -3,7 +3,7 @@
 <div class="max-w-3xl mx-auto py-10 px-4">
     <h2 class="text-3xl font-extrabold text-indigo-800 mb-8 flex items-center">
         <i class="fa-solid fa-user-check text-indigo-500 mr-3"></i>
-        Saisie des présences <span class="ml-2 text-gray-500 font-medium">({{ $cours->matiere }})</span>
+        Saisie des présences <span class="ml-2 text-gray-500 font-medium">({{ $cours->matiere->nom }})</span>
     </h2>
     <form method="POST" action="{{ route('coordinateur.presences.update', $cours->id) }}" class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
         @csrf

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Contrôleur pour la gestion des présences côté parent
@@ -20,9 +21,43 @@ use Illuminate\Http\Request;
 class ParentPresenceController extends Controller
 {
     use NotificationTrait;
+
+    /**
+     * Met à jour l'adresse email du parent
+     */
+    public function updateEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|unique:users,email,' . Auth::id(),
+        ], [
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'Veuillez entrer une adresse email valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+        ]);
+
+        $user = User::find(Auth::id());
+        $user->email = $request->email;
+        $user->save();
+
+        // Envoyer un email de confirmation
+        try {
+            Mail::raw('Votre adresse email pour les notifications IFRAN a été mise à jour avec succès.', function ($message) use ($request) {
+                $message->to($request->email)
+                       ->subject('Confirmation de mise à jour email - IFRAN Presences');
+            });
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'envoi du mail de confirmation : ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('parent.dashboard')
+            ->with('success', 'Votre adresse email a été mise à jour avec succès !');
+    }
+
     /**
      * Affiche le tableau de bord parent avec les statistiques de ses enfants
-     */    public function dashboard()
+     */
+    public function dashboard()
     {
         // Récupérer le parent connecté
         $parent = Auth::user();

@@ -132,7 +132,8 @@ class ClasseController extends Controller
             abort(403);
         }
         $coordinateurs = User::where('role', 'coordinateur')->get();
-        return view('admin.create-classe', compact('coordinateurs'));
+        $anneesAcademiques = \App\Models\AnneeAcademique::where('statut', 'en_cours')->get();
+        return view('admin.create-classe', compact('coordinateurs', 'anneesAcademiques'));
     }
 
     // Enregistre la classe (admin uniquement, sans étudiants)
@@ -146,7 +147,7 @@ class ClasseController extends Controller
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'coordinateur_id' => 'required|exists:users,id',
-            'annee_academique' => 'required|string',
+            'annee_academique_id' => 'required|exists:annee_academiques,id',
             'etudiants' => 'nullable|array',
             'etudiants.*' => 'exists:users,id'
         ]);
@@ -154,8 +155,10 @@ class ClasseController extends Controller
         try {
             // Utiliser la méthode statique du modèle pour créer la classe
             $classe = Classe::creerClasse($validated);
+            // Récupérer l'année académique
+            $anneeAcademique = \App\Models\AnneeAcademique::findOrFail($validated['annee_academique_id']);
             return redirect()->route('admin.classes.index')
-                ->with('success', "La classe a été créée avec succès pour le semestre 1 de l'année {$validated['annee_academique']}. Le semestre 2 sera créé automatiquement lors de la clôture du semestre 1.");
+                ->with('success', "La classe a été créée avec succès pour le semestre 1 de l'année {$anneeAcademique->annee}. Le semestre 2 sera créé automatiquement lors de la clôture du semestre 1.");
 
         } catch (\Exception $e) {
             DB::rollBack();

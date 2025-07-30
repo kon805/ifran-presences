@@ -7,6 +7,21 @@
         <i class="fas fa-chart-line text-blue-600 mr-4"></i>
         Tableau de bord
     </h2>
+  {{-- liens qui mene vers la page graphique --}}
+    <div class="bg-white shadow-lg rounded-2xl p-6 border border-blue-200 mb-8 bg-gradient-to-br from-blue-50 via-white to-blue-100">
+        <div class="flex items-center mb-4">
+            <div class="bg-blue-100 p-3 rounded-full mr-4">
+                <i class="fas fa-tachometer-alt text-blue-600 text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Bienvenue dans votre espace coordinateur</h3>
+        </div>
+        <p class="text-gray-700">
+            Surveillez facilement les performances académiques et la présence des étudiants. Consultez ci-dessous les informations récentes et accédez aux détails complets en un seul clic.
+        </p>
+        <a href="{{ route('coordinateur.graphiques.index') }}" class="text-blue-600 hover:underline">Voir les statistiques détaillées</a>
+    </div>
+
+
 
     <!-- Cartes de statistiques principales -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

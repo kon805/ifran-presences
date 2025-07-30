@@ -14,6 +14,11 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->string('nom');
+            $table->foreignId('annee_academique_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('semestre')->default('1');
+            $table->boolean('semestre_termine')->default(false);
+            $table->integer('semestre_actuel')->default(1);
+            $table->enum('statut', ['en_cours', 'termine'])->default('en_cours');
             $table->timestamps();
         });
 

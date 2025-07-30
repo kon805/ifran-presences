@@ -13,32 +13,27 @@
                     <i class="fa-solid fa-chalkboard-user mr-1"></i>
                     Nom de la classe
                 </label>
-                <input 
-                    type="text" name="nom" id="nom" 
+                <input
+                    type="text" name="nom" id="nom"
                     class="border-2 border-blue-200 rounded-xl w-full p-3 focus:ring-2 focus:ring-blue-300 text-lg shadow"
                     required
                     placeholder="Ex: 3ème A, Terminale S..."
                 >
             </div>
             <div>
-                <label for="annee_academique" class="block text-lg font-semibold text-blue-800 mb-2">
+                <label for="annee_academique_id" class="block text-lg font-semibold text-blue-800 mb-2">
                     <i class="fa-solid fa-calendar-days mr-1"></i>
                     Année académique
                 </label>
-                <select 
-                    name="annee_academique" id="annee_academique" 
+                <select
+                    name="annee_academique_id" id="annee_academique_id"
                     class="border-2 border-blue-200 rounded-xl w-full p-3 focus:ring-2 focus:ring-blue-300 text-lg shadow"
                     required
                 >
                     <option value="">-- Choisir une année académique --</option>
-                    @php
-                        $currentYear = (int)date('Y');
-                        for($i = 0; $i < 3; $i++) {
-                            $year = $currentYear + $i;
-                            $academicYear = $year . '-' . ($year + 1);
-                            echo "<option value=\"{$academicYear}\">{$academicYear}</option>";
-                        }
-                    @endphp
+                    @foreach($anneesAcademiques as $anneeAcademique)
+                        <option value="{{ $anneeAcademique->id }}">{{ $anneeAcademique->annee }}</option>
+                    @endforeach
                 </select>
             </div>
             <input type="hidden" name="semestre" value="1">
@@ -48,7 +43,7 @@
                     <i class="fa-solid fa-user-tie mr-1"></i>
                     Coordinateur
                 </label>
-                <select 
+                <select
                     name="coordinateur_id" id="coordinateur_id"
                     class="border-2 border-blue-200 rounded-xl w-full p-3 focus:ring-2 focus:ring-blue-300 text-lg shadow"
                     required

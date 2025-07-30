@@ -2,7 +2,7 @@
     $role = Auth::user()->role ?? null;
     $configs = [
       'admin' => [
-     'logo' => asset('img/if3.png'),
+     'logo' => asset('img/logo2.png'),
     'color' => ' bg-gradient-to-br from-black via-gray-900 to-neutral-800',
     'title' => 'Tableau de bord<br />Administrateur',
     'links' => [
@@ -11,10 +11,11 @@
         ['route' => 'admin.matieres.index', 'icon' => 'fa-book', 'text' => 'Liste des matières', 'code_couleur' => '#1E1E1E'],
         ['route' => 'admin.classes.index', 'icon' => 'fa-school', 'text' => 'Liste des classes', 'code_couleur' => '#1E1E1E'],
         ['route' => 'admin.users.assign-students', 'icon' => 'fa-user-friends', 'text' => 'Assigner étudiants aux parents', 'code_couleur' => '#1E1E1E'],
+        ['route' => 'admin.annees-academiques.index', 'icon' => 'fa-calendar-alt', 'text' => 'Années Académiques', 'code_couleur' => '#1E1E1E'],
     ]
 ],
 'coordinateur' => [
-    'logo' => asset('img/if3.png'),
+    'logo' => asset('img/logo2.png'),
     'color' => 'bg-gradient-to-br from-red-900 via-red-700 to-red-500',
     'title' => 'Tableau de bord<br />Coordinateur',
     'links' => [
@@ -27,7 +28,7 @@
     ]
 ],
 'professeur' => [
-    'logo' => asset('img/if3.png'),
+  'logo' => asset('img/logo2.png'),
     'color' => 'bg-gradient-to-br from-yellow-700 via-yellow-600 to-yellow-500',
     'title' => 'Tableau de bord<br />Professeur',
     'links' => [
@@ -36,7 +37,7 @@
     ]
 ],
 'etudiant' => [
-    'logo' => asset('img/if3.png'),
+ 'logo' => asset('img/logo2.png'),
     'color' => 'bg-gradient-to-br from-blue-800 via-blue-600 to-blue-400',
     'title' => 'Tableau de bord<br />Étudiant',
     'links' => [
@@ -48,7 +49,7 @@
     ]
 ],
 'parent' => [
-    'logo' => asset('img/if3.png'),
+    'logo' => asset('img/logo2.png'),
     'color' => 'bg-gradient-to-br from-cyan-800 via-cyan-600 to-cyan-400',
     'title' => 'Tableau de bord<br />Parent',
     'links' => [

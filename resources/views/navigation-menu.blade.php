@@ -23,6 +23,11 @@
                             {{ __('creer un utilisateur') }}
                         </x-nav-link>
                     </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('admin.annees-academiques.index') }}" :active="request()->routeIs('admin.annees-academiques.*')">
+                            {{ __('Années Académiques') }}
+                        </x-nav-link>
+                    </div>
                 @elseif($role === 'coordinateur')
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link href="/coordinateur" :active="request()->is('coordinateur')">

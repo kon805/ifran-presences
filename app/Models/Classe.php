@@ -15,7 +15,7 @@ class Classe extends Model
     protected $fillable = [
         'nom',
         'coordinateur_id',
-        'annee_academique',
+        'annee_academique_id',
         'semestre',
         'statut',
         'semestre_termine',
@@ -25,6 +25,11 @@ class Classe extends Model
     protected $casts = [
         'semestre_termine' => 'boolean',
     ];
+
+    public function anneeAcademique()
+    {
+        return $this->belongsTo(AnneeAcademique::class);
+    }
 
     public function etudiants()
     {
@@ -66,6 +71,17 @@ class Classe extends Model
     public function coordinateur()
     {
         return $this->belongsTo(User::class, 'coordinateur_id');
+    }
+
+    public function professeurs()
+    {
+        return $this->belongsToMany(User::class, 'classe_professeur', 'classe_id', 'professeur_id')
+            ->where('role', 'professeur');
+    }
+
+    public function matieres()
+    {
+        return $this->belongsToMany(Matiere::class, 'classe_matiere', 'classe_id', 'matiere_id');
     }
 
     /**
@@ -155,7 +171,7 @@ public static function creerClasse($data)
         $classe = self::create([
             'nom' => trim($data['nom']),
             'coordinateur_id' => (int)$data['coordinateur_id'],
-            'annee_academique' => trim($data['annee_academique']),
+            'annee_academique_id' => (int)$data['annee_academique_id'],
             'semestre' => '1',
             'semestre_actuel' => 1,
             'semestre_termine' => false,

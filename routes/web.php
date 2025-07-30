@@ -8,15 +8,46 @@ use App\Http\Controllers\PresenceConsultationController;
 use App\Http\Controllers\EtudiantPresenceController;
 use App\Http\Controllers\EtudiantEmploiTempsController;
 use App\Http\Controllers\EtudiantMatiereController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\JustificationController;
 use App\Http\Controllers\EmploiDuTempsController;
 use App\Http\Controllers\ParentPresenceController;
 use App\Http\Controllers\AssignStudentsController;
+use App\Http\Controllers\AnneeAcademiqueController;
 
 
-
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\DashboardController;
+
+use App\Http\Controllers\GraphiqueController;
+use App\Models\AnneeAcademique;
+
+use Illuminate\Mail\Message;
+
+// Route de test pour l'email
+Route::get('/test-email', function () {
+    try {
+        Mail::raw('Test email from IFRAN Presences', function (Message $message) {
+            $message->to('kdaou048@gmail.com')
+                   ->subject('Test Email');
+        })->queue();
+        return 'Email ajouté à la file d\'attente avec succès! Il sera envoyé sous peu.';
+    } catch (\Exception $e) {
+        return 'Erreur lors de l\'ajout à la file d\'attente: ' . $e->getMessage();
+    }
+});
+
+// Routes pour les notifications
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/count', [NotificationController::class, 'getUnreadCount'])->name('notifications.count');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'deleteNotification'])->name('notifications.delete');
+    Route::delete('/notifications', [NotificationController::class, 'deleteAllNotifications'])->name('notifications.deleteAll');
+});
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', function (\Illuminate\Http\Request $request) {
         $role = $request->user()->role;
@@ -60,10 +91,25 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
           Route::post('/classes', [ClasseController::class, 'store'])->name('admin.classes.store');
           Route::post('/classes/{id}/terminer-semestre', [ClasseController::class, 'terminerSemestre'])->name('admin.classes.terminer-semestre');
 
+          Route::get('/annees-academiques', [AnneeAcademiqueController::class, 'index'])->name('admin.annees-academiques.index');
+            Route::get('/annees-academiques/create', [AnneeAcademiqueController::class, 'create'])->name('admin.annees-academiques.create');
+            Route::post('/annees-academiques', [AnneeAcademiqueController::class, 'store'])->name('admin.annees-academiques.store');
+            Route::get('/annees-academiques/{id}/edit', [AnneeAcademiqueController::class, 'edit'])->name('admin.annees-academiques.edit');
+            Route::put('/annees-academiques/{id}', [AnneeAcademiqueController::class, 'update'])->name('admin.annees-academiques.update');
+            Route::delete('/annees-academiques/{id}', [AnneeAcademiqueController::class, 'destroy'])->name('admin.annees-academiques.destroy');
+            Route::post('/annees-academiques/{anneeAcademique}/terminer', [AnneeAcademiqueController::class, 'terminer'])->name('admin.annees-academiques.terminer');
+            Route::get('/annees-academiques/{anneeAcademique}', [AnneeAcademiqueController::class, 'show'])->name('admin.annees-academiques.show');
+
 
     });
 
     Route::middleware('role:coordinateur')->prefix('coordinateur')->group(function () {
+        // Routes pour les graphiques
+        Route::get('/graphiques', [GraphiqueController::class, 'index'])->name('coordinateur.graphiques.index');
+        Route::get('/graphiques/presence-etudiant', [GraphiqueController::class, 'presenceEtudiant']);
+        Route::get('/graphiques/presence-classe', [GraphiqueController::class, 'presenceClasse']);
+        Route::get('/graphiques/volume-cours', [GraphiqueController::class, 'volumeCours']);
+        Route::get('/graphiques/volume-cumule', [GraphiqueController::class, 'volumeCumule']);
 
 
          Route::get('/', [DashboardController::class, 'index'])->name('coordinateur.dashboard');
@@ -142,6 +188,7 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/redirect-by-role', functi
 
 Route::middleware('role:parent')->prefix('parent')->group(function () {
     Route::get('/', fn () => view('parent.dashboard'))->name('parent.dashboard');
+    Route::put('/update-email', [ParentPresenceController::class, 'updateEmail'])->name('parent.update-email');
 
     Route::get('/absences', [ParentPresenceController::class, 'index'])->name('parent.presences.index');
     Route::get('/absences/etudiant/{etudiant}', [ParentPresenceController::class, 'showEtudiantAbsences'])
@@ -156,6 +203,28 @@ Route::middleware('role:parent')->prefix('parent')->group(function () {
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// Route de test pour les emails
+Route::get('/test-mail', function () {
+    try {
+        Mail::raw('Test email from IFRAN Presences - ' . now(), function ($message) {
+            $message->to('kdaou048@gmail.com')
+                   ->subject('Test Email - ' . now())
+                   ->from(config('mail.from.address'), config('mail.from.name'));
+        });
+
+        return 'Email de test envoyé avec succès ! Vérifiez votre boîte de réception (et les spams).';
+    } catch (\Exception $e) {
+        $error = $e->getMessage();
+        Log::error('Erreur d\'envoi email : ' . $error);
+        return 'Erreur lors de l\'envoi : ' . $error .
+               '<br><br>Vérifiez que : <br>
+               1. Vous avez activé l\'authentification à 2 facteurs<br>
+               2. Vous avez généré un mot de passe d\'application<br>
+               3. Le mot de passe est correctement copié dans .env<br>
+               4. Vous avez exécuté php artisan config:clear';
+    }
 });
 
 

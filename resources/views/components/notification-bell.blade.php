@@ -1,28 +1,28 @@
-<div x-data="{ open: false, notifications: [], unreadCount: 0 }" 
+<div x-data="{ open: false, notifications: [], unreadCount: 0 }"
     x-init="() => {
-        fetch('/notifications/count')
+        fetch('{{ route('notifications.count') }}')
             .then(response => response.json())
             .then(data => unreadCount = data.count);
-        
+
         setInterval(() => {
-            fetch('/notifications/count')
+            fetch('{{ route('notifications.count') }}')
                 .then(response => response.json())
                 .then(data => unreadCount = data.count);
         }, 60000);
     }"
     class="relative">
-    
+
     <!-- Cloche de notification -->
     <button @click="
         open = !open;
         if (open) {
-            fetch('/notifications')
+            fetch('{{ route('notifications.index') }}')
                 .then(response => response.json())
                 .then(data => notifications = data);
         }"
         class="relative p-2 text-gray-600 hover:text-blue-600 focus:outline-none">
         <i class="fas fa-bell text-xl"></i>
-        
+
         <!-- Badge de notifications non lues -->
         <div x-show="unreadCount > 0"
             x-transition
@@ -41,10 +41,32 @@
         x-transition:leave-end="opacity-0 scale-95"
         @click.away="open = false"
         class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-        
+
         <div class="max-h-96 overflow-y-auto">
             <div class="p-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                    <div class="space-x-2">
+                        @if(config('app.debug'))
+                        <a href="{{ url('/test-notification') }}" class="text-xs text-blue-600 hover:text-blue-800">
+                            Test
+                        </a>
+                        @endif
+                        <button
+                            @click="fetch('{{ route('notifications.deleteAll') }}', {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                }
+                            }).then(() => {
+                                notifications = [];
+                                unreadCount = 0;
+                            })"
+                            class="text-xs text-red-600 hover:text-red-800">
+                            Tout supprimer
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Liste des notifications -->
@@ -62,24 +84,54 @@
                                 <template x-if="notif.type === 'absence'">
                                     <i class="fas fa-user-clock text-red-500"></i>
                                 </template>
-                                <template x-if="notif.type === 'dropped'">
-                                    <i class="fas fa-user-slash text-yellow-500"></i>
+                                <template x-if="notif.type === 'status'">
+                                    <template x-if="notif.data && notif.data.new_status">
+                                        <i class="fas fa-check-circle text-green-500"></i>
+                                    </template>
+                                    <template x-if="notif.data && !notif.data.new_status">
+                                        <i class="fas fa-user-slash text-yellow-500"></i>
+                                    </template>
                                 </template>
                             </div>
                             <div class="ml-3 w-0 flex-1">
                                 <p class="text-sm text-gray-900" x-text="notif.message"></p>
                                 <p class="mt-1 text-xs text-gray-500" x-text="new Date(notif.created_at).toLocaleString()"></p>
                             </div>
-                            <button @click="
-                                fetch(`/notifications/${notif.id}/read`, { method: 'POST' })
+                            <div class="flex space-x-2">
+                                <button @click="
+                                    fetch(`/notifications/${notif.id}/read`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                        }
+                                    })
                                     .then(() => {
                                         notif.lu = true;
                                         unreadCount = Math.max(0, unreadCount - 1);
                                     })"
-                                x-show="!notif.lu"
-                                class="ml-3 text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-check"></i>
-                            </button>
+                                    x-show="!notif.lu"
+                                    class="text-blue-600 hover:text-blue-800"
+                                    title="Marquer comme lu">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button @click="
+                                    fetch(`/notifications/${notif.id}`, {
+                                        method: 'DELETE',
+                                        headers: {
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                        }
+                                    })
+                                    .then(() => {
+                                        notifications = notifications.filter(n => n.id !== notif.id);
+                                        if (!notif.lu) {
+                                            unreadCount = Math.max(0, unreadCount - 1);
+                                        }
+                                    })"
+                                    class="text-red-600 hover:text-red-800"
+                                    title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </template>

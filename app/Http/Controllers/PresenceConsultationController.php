@@ -6,7 +6,10 @@ use App\Traits\NotificationTrait;
 use App\Models\Cours;
 use Illuminate\Http\Request;
 use App\Models\Presence;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Notifications\StatusChangeNotification;
 
 class PresenceConsultationController extends Controller
 {
@@ -32,7 +35,7 @@ class PresenceConsultationController extends Controller
         return view('coordinateur.presences.show', compact('cours'));
     }
 
-        public function edit(Cours $cours)
+    public function edit(Cours $cours)
     {
         $cours->load(['classe.etudiants', 'presences']);
 
@@ -45,10 +48,16 @@ class PresenceConsultationController extends Controller
         return view('coordinateur.presences.edit', compact('cours'));
     }
 
-        public function update(Request $request, Cours $cours)
+    public function update(Request $request, Cours $cours)
     {
         $request->validate([
             'presences' => 'required|array'
+        ]);
+
+        Log::info('Début de la mise à jour des présences', [
+            'cours_id' => $cours->id,
+            'matiere' => $cours->matiere->nom,
+            'nb_presences' => count($request->presences)
         ]);
 
         DB::transaction(function () use ($request, $cours) {
@@ -88,11 +97,81 @@ class PresenceConsultationController extends Controller
                 if ($totalCours > 0) {
                     $tauxPresence = ($presences / $totalCours) * 100;
 
+                    // Récupérer l'ancien statut
+                    $oldStatus = DB::table('matiere_user')
+                        ->where('user_id', $etudiant->id)
+                        ->where('matiere_id', $matiere->id)
+                        ->value('dropped');
+
+                    $newStatus = $tauxPresence >= 70; // true si non dropped, false si dropped
+
                     // Mettre à jour le statut dropped si le taux est inférieur à 70%
                     DB::table('matiere_user')
                         ->where('user_id', $etudiant->id)
                         ->where('matiere_id', $matiere->id)
-                        ->update(['dropped' => $tauxPresence < 70]);
+                        ->update(['dropped' => !$newStatus]);
+
+                    // Si le statut a changé, envoyer une notification à l'étudiant et ses parents
+                    if ($oldStatus !== !$newStatus) {
+                        $notification = new StatusChangeNotification(
+                            $matiere,
+                            $oldStatus,
+                            $newStatus,
+                            $tauxPresence
+                        );
+
+                        try {
+                            // Notifier l'étudiant s'il existe
+                            if ($etudiant) {
+                                Log::info('Tentative de notification à l\'étudiant', [
+                                    'etudiant_id' => $etudiant->id,
+                                    'matiere' => $matiere->nom,
+                                    'role' => $etudiant->role
+                                ]);
+                                $etudiant->notify($notification);
+                                Log::info("Notification envoyée avec succès à l'étudiant", [
+                                    'etudiant_id' => $etudiant->id
+                                ]);
+                            }
+
+                            // Charger et notifier les parents
+                            $parents = $etudiant->parents()->get();
+                            foreach ($parents as $parent) {
+                                if ($parent) {
+                                    Log::info('Tentative de notification au parent', [
+                                        'parent_id' => $parent->id,
+                                        'role' => $parent->role
+                                    ]);
+                                    $parent->notify($notification);
+                                    Log::info("Notification envoyée avec succès au parent", [
+                                        'parent_id' => $parent->id
+                                    ]);
+                                }
+                            }
+
+                            // Notifier les coordinateurs
+                            $coordinateurs = User::where('role', 'coordinateur')->get();
+                            Log::info('Recherche des coordinateurs', [
+                                'nombre_trouve' => $coordinateurs->count()
+                            ]);
+
+                            foreach ($coordinateurs as $coordinateur) {
+                                Log::info('Tentative de notification au coordinateur', [
+                                    'coordinateur_id' => $coordinateur->id,
+                                    'role' => $coordinateur->role
+                                ]);
+                                $coordinateur->notify($notification);
+                                Log::info("Notification envoyée avec succès au coordinateur", [
+                                    'coordinateur_id' => $coordinateur->id
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("Erreur lors de l'envoi des notifications", [
+                                'message' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                        }
+                    }
                 }
             }
         });

@@ -19,6 +19,12 @@ class Cours extends Model
         'etat'
     ];
 
+    protected $dates = [
+        'date',
+        'heure_debut',
+        'heure_fin'
+    ];
+
     public function classe()
     {
         return $this->belongsTo(Classe::class);
